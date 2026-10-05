@@ -111,7 +111,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
-| `pr-1045-framing` | **Round 1 QUEUED** | `pr-1045-framing-round1-brief.md`. Outside PR, `dfb0d6f9` on `emotionbug/open-headunit` (`pr/split-aap-framing`) vs `main` `7e9d813d`. Decides: fps under the one-ack-per-DATA window (phone-side `Waiting for ack timeout`), zero healthy-stream discards, injector parity, old-Android TLS, USB. |
+| `pr-1045-framing` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
 | `pr-1046-video-retirement` | **Round 1 QUEUED** | `pr-1046-video-retirement-round1-brief.md`. Outside PR, `e7c2949c` (`pr/split-video-retirement`) vs `main` `7e9d813d`. Headline: GLES Home/screen-off returns lose the warm-relaunch escalation (code review blocker); SURFACE/TEXTURE controls, codec pin, overload, old Android. |
 | `pr-1047-session-reconnect` | **Round 1 QUEUED** | `pr-1047-session-reconnect-round1-brief.md`. Outside PR, `ac741d29` (`pr/split-session-reconnect`) vs `main` `7e9d813d`, plus a combo arm with all three split PRs merged (tree `8eb30402`). Audio-save reconnect per transport, user exit x10, USB storms, Nearby exit, tier preemption. |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
