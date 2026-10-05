@@ -111,6 +111,9 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
+| `pr-1045-framing` | **Round 1 QUEUED** | `pr-1045-framing-round1-brief.md`. Outside PR, `dfb0d6f9` on `emotionbug/open-headunit` (`pr/split-aap-framing`) vs `main` `7e9d813d`. Decides: fps under the one-ack-per-DATA window (phone-side `Waiting for ack timeout`), zero healthy-stream discards, injector parity, old-Android TLS, USB. |
+| `pr-1046-video-retirement` | **Round 1 QUEUED** | `pr-1046-video-retirement-round1-brief.md`. Outside PR, `e7c2949c` (`pr/split-video-retirement`) vs `main` `7e9d813d`. Headline: GLES Home/screen-off returns lose the warm-relaunch escalation (code review blocker); SURFACE/TEXTURE controls, codec pin, overload, old Android. |
+| `pr-1047-session-reconnect` | **Round 1 QUEUED** | `pr-1047-session-reconnect-round1-brief.md`. Outside PR, `ac741d29` (`pr/split-session-reconnect`) vs `main` `7e9d813d`, plus a combo arm with all three split PRs merged (tree `8eb30402`). Audio-save reconnect per transport, user exit x10, USB storms, Nearby exit, tier preemption. |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
 | `home-wifi-reconnect-mid-session` | Round 2 reported (D-SAM): R2 PASS (4 joins, 4 answered in 1.11 to 1.15 s), R5 INCONCLUSIVE (A-R2a session lost, restore not reached), R6 measured (7 link stalls joined vs 0 stood down) | `home-wifi-reconnect-mid-session-round2-results.md`, candidate `9676eee4`. |
 | `rig-sdlc` | **DONE, adopted** | `rig-sdlc/README.md`: `/rig-round`, host-driven (no workflow on the rig), Haiku `rig-executor` in the foreground; install steps inside. |
