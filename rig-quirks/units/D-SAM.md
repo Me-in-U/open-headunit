@@ -84,3 +84,8 @@ Every one of these was measured across `t230-native-aa-bringup` rounds 1 to 4.
   by itself, not chained with `enable`, and got the same `"try again in 1second"` loop eight times
   over plus an unsolicited multi-megabyte `dumpstate` on stdout, with WiFi still enabled two seconds
   later. `settings put global wifi_on 0` does nothing either. Neither tablet has a working lever.
+
+- **D-SAM as head unit fails to wake D-POCO while D-POCO is still bonded to D-HU's Bluetooth.** The
+  symptom is HFP pokes answered and the Android Auto channel never opened (`SESSION_FAIL_SSL`, the
+  "has never opened the Android Auto channel" warning). Unpairing D-HU's radio on D-POCO fixed it. The
+  full entry, with the check and the numbers, is in `D-POCO.md`.

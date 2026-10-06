@@ -57,3 +57,16 @@ The POCO phone, and when it stands in as the head unit. Moved verbatim from `TES
   the radio is fine.** Seen twice in `audio-sink-jitter` round 6 after `svc wifi disable`/`enable`
   cycling, with station WiFi itself reading `Wi-Fi is enabled` and a real P2P join completing
   minutes later. Treat it as a stale read, not a disabled radio, and do not gate a run on it.
+- **D-POCO stays bonded to every head unit it has projected to, and a stale bond can stop it waking another one.**
+  With D-HU's Bluetooth radio (`Navegadortz2`) still in D-POCO's paired list beside D-SAM's
+  (`Navegadortz3`), D-SAM as head unit got the HFP poke answered and the service level connection
+  established 15 times in 3 minutes, but the phone never opened the Android Auto channel: no
+  connect-back, no `Incoming connection`, `SESSION_FAIL_SSL` after 150 s, on 3 attempts. The app's own
+  warning appeared 3 times per attempt ("has never opened the Android Auto channel ... most likely
+  bound to a different Bluetooth device that also advertises the Android Auto service"). After the
+  operator unpaired `Navegadortz2` on D-POCO, the next two bring-ups formed a session and ran 5 cycles
+  each. Corroborated, not proven: no control run was made with the bond present against a passing
+  one. There is no adb verb to unpair, so it is an operator step: before a round that moves D-POCO
+  between head units, check `adb -s 4f4027e9 shell dumpsys bluetooth_manager | grep -a -A8 'Bonded
+  devices'` and ask for the other head unit's radio to be forgotten. Switching the other unit's
+  Bluetooth off is not enough. Measured in `projection-teardown-and-relays` round 1.
