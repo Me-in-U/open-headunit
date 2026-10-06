@@ -111,7 +111,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
-| `projection-teardown-and-relays` | **Round 2 reported** | `projection-teardown-and-relays-round2-results.md`. R0, R2-C PASS (R2-B baseline reaches the mechanism 11/20). R4-C FAIL, R4L-C INCONCLUSIVE: candidate process dies on D-HP (API 17) in `HeldServerSocket` (`removeIf` lambda). Fix, then round 3. |
+| `projection-teardown-and-relays` | **Round 3 READY** | `projection-teardown-and-relays-round3-brief.md`. D-HP with D-POCO only: R0, R4E-B/R4E-C (report-only reset probe), R4-C on a go-on-found trigger, R4L-C; operator restarts D-POCO's server by hand. Round 2: `projection-teardown-and-relays-round2-results.md` (R2 settled; API 17 crash fixed). |
 | `pr-1045-framing` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
 | `pr-1046-video-retirement` | Round 1 reported, round FAIL | `pr-1046-video-retirement-round1-results.md`. `e7c2949c` vs `7e9d813d`. GLES screen-off returns lose the warm-relaunch escalation (B1 reproduced, H.264 no picture in 90 s, H.265 87 to 99 s); Home and launcher returns recreate the surface on both builds. TEXTURE rule FAIL, rest PASS, V1M UNTESTABLE. |
 | `pr-1047-session-reconnect` | Round 1 reported, round FAIL | `pr-1047-session-reconnect-round1-results.md`, addendum `-round1-addendum-results.md`. C3 x10 PASS; combo loses video after covers (before the save) and after the save; K alone and B fine. Stages B, N, C, D not run. |
