@@ -80,6 +80,11 @@ were reported under another filename, and are listed so the pairing rule does no
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
+- `pr-1063-restart-audio-round1-brief.md` (D-HP; small, main already carries the fix)
+- `pr-1064-nearby-attempts-round1-brief.md` (Nearby stage gated on N0; needs the Wireless Helper built from upstream)
+- `pr-1065-reconnect-timers-round1-brief.md` (USB stage first, needs an operator)
+- `pr-1066-byebye-priority-round1-brief.md` (USB stage needs an operator)
+- `pr-1067-tls-pump-round1-brief.md` (40 operator exits in the Android Auto UI)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -115,6 +120,11 @@ by `bssid-round1-results.md` and its addendum.
 | `pr-1045-framing` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
 | `pr-1046-video-retirement` | Round 1 reported, round FAIL | `pr-1046-video-retirement-round1-results.md`. `e7c2949c` vs `7e9d813d`. GLES screen-off returns lose the warm-relaunch escalation (B1 reproduced, H.264 no picture in 90 s, H.265 87 to 99 s); Home and launcher returns recreate the surface on both builds. TEXTURE rule FAIL, rest PASS, V1M UNTESTABLE. |
 | `pr-1047-session-reconnect` | Round 1 reported, round FAIL | `pr-1047-session-reconnect-round1-results.md`, addendum `-round1-addendum-results.md`. C3 x10 PASS; combo loses video after covers (before the save) and after the save; K alone and B fine. Stages B, N, C, D not run. |
+| `pr-1063-restart-audio` | Round 1 queued | `pr-1063-restart-audio-round1-brief.md`. `145a0c76` vs main plus `42151477`. |
+| `pr-1064-nearby-attempts` | Round 1 queued | `pr-1064-nearby-attempts-round1-brief.md`. `2ca3b1f1` vs `32311d31` (conflicts with main). |
+| `pr-1065-reconnect-timers` | Round 1 queued | `pr-1065-reconnect-timers-round1-brief.md`. `145a0c76` vs main plus `096f57da`. |
+| `pr-1066-byebye-priority` | Round 1 queued | `pr-1066-byebye-priority-round1-brief.md`. `145a0c76` vs main plus `73db22f6`. |
+| `pr-1067-tls-pump` | Round 1 queued | `pr-1067-tls-pump-round1-brief.md`. `145a0c76` vs main plus `719b6963`. |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
 | `home-wifi-reconnect-mid-session` | Round 2 reported (D-SAM): R2 PASS (4 joins, 4 answered in 1.11 to 1.15 s), R5 INCONCLUSIVE (A-R2a session lost, restore not reached), R6 measured (7 link stalls joined vs 0 stood down) | `home-wifi-reconnect-mid-session-round2-results.md`, candidate `9676eee4`. |
 | `rig-sdlc` | **DONE, adopted** | `rig-sdlc/README.md`: `/rig-round`, host-driven (no workflow on the rig), Haiku `rig-executor` in the foreground; install steps inside. |
