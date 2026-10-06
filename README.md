@@ -111,7 +111,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
-| `projection-teardown-and-relays` | **Round 1 DONE** | `projection-teardown-and-relays-round1-results.md`. R3-C, R3G-C, R3S-C, R5-C, R1-C, R5P-C PASS; R2 INCONCLUSIVE (Home tears no GLES surface); R4-C FAIL (EARLY cycle wedged server, join untested); R4L-C UNTESTABLE; R6 PASS guard only. Next: R4 retest on a fresh server. |
+| `projection-teardown-and-relays` | **Round 2 READY** | `projection-teardown-and-relays-round2-brief.md`. R0, R2 on SURFACE (both builds), R4-C on a restarted server, R4L-C; phone captures in every run. Round 1: `projection-teardown-and-relays-round1-results.md`. |
 | `pr-1045-framing` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
 | `pr-1046-video-retirement` | Round 1 reported, round FAIL | `pr-1046-video-retirement-round1-results.md`. `e7c2949c` vs `7e9d813d`. GLES screen-off returns lose the warm-relaunch escalation (B1 reproduced, H.264 no picture in 90 s, H.265 87 to 99 s); Home and launcher returns recreate the surface on both builds. TEXTURE rule FAIL, rest PASS, V1M UNTESTABLE. |
 | `pr-1047-session-reconnect` | Round 1 reported, round FAIL | `pr-1047-session-reconnect-round1-results.md`, addendum `-round1-addendum-results.md`. C3 x10 PASS; combo loses video after covers (before the save) and after the save; K alone and B fine. Stages B, N, C, D not run. |

@@ -729,7 +729,10 @@ A brief that gets a useful round back has these parts, in this order:
 6. **The lines that decide every run** — copied verbatim from the source, not from memory. Verify
    them with `grep -F` against the branch before committing the brief.
 7. **Runs**, each with an id, the exact setup, and explicit PASS / FAIL conditions. Mark which one is
-   the point of the round.
+   the point of the round. **A phone capture is mandatory** in every run that touches the phone's
+   Android Auto (the head unit server, a Native AA handshake, Self Mode, a session start or end, any
+   reply the phone sends): `adb logcat` on the phone, bounded by the same run markers, with at least
+   one condition graded from it. A head unit log alone cannot say what Android Auto did.
 8. **Do not re-run** — settled runs, so the round is not spent re-proving them.
 9. **Report back** — the two or three numbers that actually decide the shipping question.
 
