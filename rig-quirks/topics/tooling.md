@@ -2,6 +2,15 @@
 
 Read for every round: adb and shell traps, build and install, settings.xml, markers, grep, fresh installs. Moved verbatim from `TESTING-TEMPLATE.md` §7a on 2026-09-30. **Unless an entry names a unit, it was measured on D-HU.**
 
+- **The host PC overheats, so every round gates on its temperature.** The host is an i7-3632QM. It throttled at 94C during a Gradle build in pr-1046 round 1, and it can shut down when hot even with new thermal paste. A throttled host delays adb and capture, which skews any timing a run grades.
+  - Build with `--max-workers=2` after cooling to 70C.
+  - Start each run below 75C, waiting at most 15 min.
+  - Log the package temperature and the throttle counter every 20 s per run.
+  - Re-run a timing run once if its throttle counter rose or it reached 90C.
+  - Write the results file after every run, so a shutdown loses one run.
+  - If the host stays hot after 30 min, stop the round and mark the rest UNTESTABLE (host thermal).
+
+  `th_gate`, `th_watch` and `th_report` in `projection-teardown-and-relays-round1-brief.md` (`ptr_lib.sh`) implement this, and fall back to sysfs when `rig_thermal.sh` is absent. Copy them into any new brief.
 - **A heard fault can be stamped into the capture.** `ACTION_LOG_MARKER --es text <label>` prints
   `AutomationMarker: <label>` at WARN, so a tester listening to a run can put the moment they heard
   something into the log beside the instruments. `-f 0x00000020` is required, as for every automation

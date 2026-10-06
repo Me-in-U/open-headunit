@@ -64,9 +64,21 @@ for s in FeedLoopPolicy ReturnRearmPolicy SameEndpointConnectPolicy; do printf '
 
 Before every run, `apk_check` (in `ptr_lib.sh`) pulls the installed APK and hashes it on the host. A piped `cat | md5sum` is not trustworthy. Set `WANT_MD5` to the md5 of the build under test whenever you install a build. `hu_open`, `hp_open` and `tab_open` call `apk_check` first and refuse to start on a mismatch. Every result goes to `$OUT/apk-check.log`; quote that file in Setup notes.
 
+### Host thermal gate (every run)
+
+The host PC (i7-3632QM) throttles under load and can shut down when it overheats, even with new thermal paste. A throttled host delays adb and log capture, which skews the picture times this round grades. A shutdown stops the round. So every run is gated on the host's temperature.
+
+- **Before every run segment:** `apk_check` calls `th_gate`. It waits until the CPU package reads below 75C, for at most 15 min. Then it starts a watcher that logs the temperature and the throttle counter every 20 s to `$OUT/<RUN>.thermal`.
+- **If the host does not cool in 15 min:** wait 15 more min with no adb work. If it is still at 75C or above, stop the round. Mark every run not yet started UNTESTABLE (host thermal). Push the results written so far.
+- **Write the results file after every run, not at the end.** A shutdown then loses at most the run in progress.
+- **Grade each run's thermal record.** Report `thermal_max` and the throttle-counter delta for every run in its section.
+  - If the delta is above 0, or `thermal_max` is 90C or above, the run's timing numbers are suspect. That covers picture time T in R3, R3G, R3S and R6, and the race timing in R4. Cool to 70C and re-run that run once.
+  - Count verdicts (crash counts, the race invariant, the verb counts) stand either way.
+- **If `rig_thermal.sh` from the last round is on the host, keep it.** `th_gate` uses it when present, and the inline fallback below when not.
+
 ### R0. Gate
 
-Run `run_unit_tests.sh` on the candidate. **PASS:** 2702 tests and 0 failures, counted from the JUnit XML, including `FeedLoopPolicyTest`, `ReturnRearmPolicyTest`, `SameEndpointConnectPolicyTest` and `AutomationCommandPolicyTest`. The two md5s differ. The three identity greps pass. A build or test failure stops the round.
+The build is the hottest step on the host: the last round peaked at 94C there. So, before R0, run `th_wait 70`, start `th_watch $OUT/R0.thermal &`, and build with `--max-workers=2`. Then run `run_unit_tests.sh` on the candidate. **PASS:** 2702 tests and 0 failures, counted from the JUnit XML, including `FeedLoopPolicyTest`, `ReturnRearmPolicyTest`, `SameEndpointConnectPolicyTest` and `AutomationCommandPolicyTest`. The two md5s differ. The three identity greps pass. A build or test failure stops the round.
 
 ## 2. What this is and why it exists
 
@@ -221,7 +233,20 @@ fastwait() { local end=$((SECONDS+$1)); while [ $SECONDS -lt $end ]; do
 seg() { sed -n "/AutomationMarker: $1\$/,/AutomationMarker: $2\$/p" "$CAP"; }
 crashes() { echo $(( $(grep -ac 'Fatal signal' "$CAP") + $(grep -ac 'ABORTING' "$CAP") + $(grep -a 'Process com.andrerinas.headunitrevived (pid' "$CAP" | grep -ac 'has died') )); }
 # apk_check : pulls the installed APK, compares its md5 with $WANT_MD5 (set it per phase), logs the result
-apk_check() { local m; adb -s "$HU" pull $(adb -s "$HU" shell pm path $PKG | cut -d: -f2 | tr -d '\r') "$OUT/live.apk" >/dev/null 2>&1
+# Host thermal: th_pkg prints the CPU package temperature in C, th_thr the package throttle count.
+th_pkg() { if [ -x ../rig_thermal.sh ]; then ../rig_thermal.sh status | grep -o 'pkg=[0-9]*' | cut -d= -f2; return; fi
+  for z in /sys/class/hwmon/hwmon*; do [ "$(cat $z/name 2>/dev/null)" = coretemp ] && { echo $(( $(cat $z/temp1_input) / 1000 )); return; }; done
+  echo $(( $(cat /sys/class/thermal/thermal_zone0/temp) / 1000 )); }
+th_thr() { cat /sys/devices/system/cpu/cpu0/thermal_throttle/package_throttle_count 2>/dev/null || echo 0; }
+th_wait() { local lim=${1:-75} n=0; while [ "$(th_pkg)" -ge "$lim" ]; do n=$((n+1)); [ $n -ge 90 ] && return 1; sleep 10; done; }
+th_watch() { while :; do echo "$(date +%T) pkg=$(th_pkg)C throttle_pkg=$(th_thr)"; sleep 20; done >> "$1"; }
+# th_gate : cool below 75C (max 15 min), then replace the previous watcher with one for this run
+th_gate() { th_wait 75 || { echo "$(date +%T) HOST_TOO_HOT ${RUN:-run}" | tee -a "$OUT/thermal.log"; return 3; }
+  [ -n "$THPID" ] && kill $THPID 2>/dev/null; th_watch "$OUT/${RUN:-run}.thermal" & THPID=$!
+  echo "$(date +%T) ${RUN:-run} start pkg=$(th_pkg)C throttle_pkg=$(th_thr)" >> "$OUT/thermal.log"; }
+# th_report RUN : prints thermal_max and the throttle delta for the run's section
+th_report() { awk -F'[ =C]+' '{p=$3; t=$5; if(p>m)m=p; if(NR==1)t0=t} END{print "thermal_max=" m "C throttle_delta=" t-t0}' "$OUT/$1.thermal"; }
+apk_check() { th_gate || return 3; local m; adb -s "$HU" pull $(adb -s "$HU" shell pm path $PKG | cut -d: -f2 | tr -d '\r') "$OUT/live.apk" >/dev/null 2>&1
   m=$(md5sum "$OUT/live.apk" | cut -d' ' -f1); echo "$(date +%T) $HU live=$m want=$WANT_MD5" | tee -a "$OUT/apk-check.log"
   [ "$m" = "$WANT_MD5" ] || { echo "APK_MISMATCH $HU" | tee -a "$OUT/apk-check.log"; return 1; }; }
 # cap_start / cap_stop : one capture per run segment. API 21 and up: full capture after logcat -G 16M.
@@ -941,7 +966,7 @@ The numbers that decide whether the branch goes to review:
 3. **R4-C:** the `IN_WINDOW` rows: `join`, `preempt_socket`, `ssl`, `picture_after_go_s`, and the cycle that stopped the run, if any.
 4. **R5 and R5P:** the window table filled for both builds, with the raise strategy each raise printed.
 
-Results go in `projection-teardown-and-relays-round1-results.md`, in the template's skeleton (section 7). Use one `## R<id>` section per run id, with the verdict in bold alone on its line. The run ids are R0, R3-B, R3-C, R3G-B, R3G-C, R3S-B, R3S-C, R5-B, R5-C, R2-B, R2-C, R1-B, R1-C, R5P-B, R5P-C, R4-C, R4L-C, R6-B, R6-C.
+Results go in `projection-teardown-and-relays-round1-results.md`, in the template's skeleton (section 7). Use one `## R<id>` section per run id, with the verdict in bold alone on its line. Write the file after every run, and put the output of `th_report <RUN>` in each run's section. The run ids are R0, R3-B, R3-C, R3G-B, R3G-C, R3S-B, R3S-C, R5-B, R5-C, R2-B, R2-C, R1-B, R1-C, R5P-B, R5P-C, R4-C, R4L-C, R6-B, R6-C.
 
 ```markdown
 # projection-teardown-and-relays, round 1 results
