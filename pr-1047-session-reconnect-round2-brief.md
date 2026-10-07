@@ -9,25 +9,25 @@ Three APKs. Build each with `build_hur.sh` and copy it out of `apks/` the moment
 | Arm | Code | Identity | Gate |
 |---|---|---|---|
 | **B** (baseline) | `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | `run_unit_tests.sh`: 0 failures; record the count |
-| **C** (candidate) | the PR head, based directly on B | commit `c67b6d46a4576424bbe59c23773182abfd70bd7d` | 2766 JVM tests, 0 failures |
-| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `9a4ade8efb6c901df1292552591b98a8a371eaae` | 0 failures; record the count |
+| **C** (candidate) | the PR head, based directly on B | commit `dbf1e3a11e4b0d694a64ec12a829d007e112508b` | 2770 JVM tests, 0 failures |
+| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `6e7426b0210a50062ab38437718be779720dc937` | 0 failures; record the count |
 
 ```bash
 git fetch https://github.com/andreknieriem/open-headunit.git pull/1047/head pull/1046/head pull/1045/head
-git cat-file -e c67b6d46a4576424bbe59c23773182abfd70bd7d || echo "C MISSING"
+git cat-file -e dbf1e3a11e4b0d694a64ec12a829d007e112508b || echo "C MISSING"
 git checkout -B arm-B 145a0c762f0a87386ca63b54518ea5e861b290be
-git checkout -B arm-C c67b6d46a4576424bbe59c23773182abfd70bd7d
-git log --oneline 145a0c76..HEAD | wc -l          # 18
+git checkout -B arm-C dbf1e3a11e4b0d694a64ec12a829d007e112508b
+git log --oneline 145a0c76..HEAD | wc -l          # 21
 git merge-base HEAD 145a0c76                       # 145a0c762f0a87386ca63b54518ea5e861b290be
 # X: built locally, so nothing depends on a merge commit someone else made
 git checkout -B arm-X 145a0c762f0a87386ca63b54518ea5e861b290be
 git merge --no-edit 9b8f83664cc5081f3d023ac699c0b5fe757334c6    # PR 1045 head
-git merge --no-edit c04aa0e022864478f984c71af4ba16bb96067993    # PR 1046 head
-git merge --no-edit c67b6d46a4576424bbe59c23773182abfd70bd7d    # PR 1047 head (C)
-git rev-parse 'HEAD^{tree}'                        # MUST print 9a4ade8efb6c901df1292552591b98a8a371eaae
+git merge --no-edit b749525d8c4b05cfcbb2a631afb727c344731e5d    # PR 1046 head
+git merge --no-edit dbf1e3a11e4b0d694a64ec12a829d007e112508b    # PR 1047 head (C)
+git rev-parse 'HEAD^{tree}'                        # MUST print 6e7426b0210a50062ab38437718be779720dc937
 ```
 
-C is the PR head as it is, rebased by its author onto `main` 145a0c76, so B and C differ by the PR's 18 commits and nothing else. Nothing on the transfer branch was rewritten since round 1.
+C is the PR head as it is, rebased by its author onto `main` 145a0c76, so B and C differ by the PR's 21 commits and nothing else. Nothing on the transfer branch was rewritten since round 1.
 
 **If `C MISSING` prints, stop the round and escalate:** the PR head moved. **If X's tree differs, or a merge conflicts, or X fails its unit tests, do not build X.** Every X run is then UNTESTABLE; record what printed and carry on with B and C. The merge commits stay local: do not push them.
 
@@ -44,7 +44,7 @@ unzip -p installed.apk 'classes*.dex' | strings | grep -cF '<symbol>'
 | `AapMessageReassembler` (PR 1045) | 0 | 0 | 1 or more |
 | `outputPublicationLock` (PR 1046) | 0 | 0 | 1 or more |
 
-The source trees agree: `SettingsRestartRecovery` is in 0 files on B and 4 on C and X; `AapMessageReassembler` is in 0 on B and C and 4 on X; `outputPublicationLock` is in 0 on B and C and 1 on X. Also send `ACTION_QUERY_STATE` and record `commit`: B's must start `145a0c76`, C's `c67b6d46`; X's is the local merge commit (record it). Record every APK md5 from a real `adb pull` plus a local `md5sum`. The three must differ.
+The source trees agree: `SettingsRestartRecovery` is in 0 files on B and 4 on C and X; `AapMessageReassembler` is in 0 on B and C and 4 on X; `outputPublicationLock` is in 0 on B and C and 1 on X. Also send `ACTION_QUERY_STATE` and record `commit`: B's must start `145a0c76`, C's `dbf1e3a1`; X's is the local merge commit (record it). Record every APK md5 from a real `adb pull` plus a local `md5sum`. The three must differ.
 
 ## 2. What this is and why it exists
 
@@ -68,6 +68,8 @@ Our review of round 2 (`reply-1047-r2`) asked for a reason of its own, which the
 - **Finding 3 (note, changed in `afb121d3`):** `ACTION_DISCONNECT` during the window now revokes the Save, so the 30 s fallback does not fire. It still does not set `userExitedAA`, and in Native mode the revoke lifts the wake hold at once, so the next credential delivery can poke the phone within seconds of the disconnect. This round does not build a run for it.
 - **New (should fix, not reached by this round):** `SettingsFragment.saveSettings` sends `ACTION_STOP_WIRELESS` before `applyAudioSettings()` when wireless is switched off or set to Manual in the same Save, and that action now revokes the pending Save. The session ends and nothing reconnects. The audio streams screen this round saves from sends no wireless intent.
 - **Finding 6 (note):** `SettingsRestartRecovery` logs nothing when it fires. So this brief grades the fallback from the lines its routes print (`AapService: WiFi Direct credential refresh requested.`, `WifiLauncher: Initializing WiFi Mode:`, `NetworkDiscovery: Starting scan...`, `NearbyManager: Starting Nearby (Discoverer only)...`).
+- **New on `dbf1e3a1` (changes U1 and U2):** the Save's own USB retry now carries the Save and is no longer held by the open settings screen. It can form a USB session behind the screen; the projection raise is still refused there (`AapService: Not raising the projection, the settings screen is open`). A re-attach that arrives through the ordinary USB attach broadcast carries no Save and is still held. On this rig the dongle drops off and comes back in normal mode at every session end (3.5), so either path can run. U1 and U2 therefore report which path ran and grade each path on its own terms.
+- **Also new:** `31c71b6b` (a first session that ends before its live states are seen still ends cleanly) and `27328bb7` (a Save on a Self Mode session restores the Self route and its VPN). Neither changes a run here.
 - **Leftover:** while the hold is on, `triggerPoke()` still prints `NativeAA: the phone ended the last session itself`, which is not what happened. Count it; it is not a FAIL.
 
 ## 3. What is different about this round
@@ -187,7 +189,7 @@ D2KEYS="int:wifi-connection-mode=1 int:log-level=2 int:onboarding-version=2 bool
 
 ## 5. The lines that decide the runs
 
-Each unit line was checked with `grep -F` against `app/src/main` (and `contract/src` for the reason) of B (`145a0c76`), C (`c67b6d46`) and the X tree. Every one prints at INFO, so `log-level=2` carries all of them. `AapService: session state <state> (<reason>)` is composed at run time; the reasons are constants in `HeadUnitIntent.kt`.
+Each unit line was checked with `grep -F` against `app/src/main` (and `contract/src` for the reason) of B (`145a0c76`), C (`dbf1e3a1`) and the X tree. Every one prints at INFO, so `log-level=2` carries all of them. `AapService: session state <state> (<reason>)` is composed at run time; the reasons are constants in `HeadUnitIntent.kt`.
 
 | Line (fixed substring) | File | Meaning | B | C, X |
 |---|---|---|---|---|
@@ -215,7 +217,7 @@ Each unit line was checked with `grep -F` against `app/src/main` (and `contract/
 | `Media Sink Setup Request: ` | unit | the phone set up a sink (`7 on channel VIDEO` is H.265) | yes | yes |
 | `AudioDecoder.start: channel=` | unit | **an audio sink started** | yes | yes |
 | `sessions in a row ended without a single video` | unit | the starvation advice | yes | yes |
-| `UsbLauncher: USB auto-connect held while the settings screen is open; ` | unit | **the USB retry was held by the screen** | yes | yes |
+| `UsbLauncher: USB auto-connect held while the settings screen is open; ` | unit | **a USB check with no Save was held by the screen** (the attach-broadcast path; the Save's own retry no longer prints it) | yes | yes |
 | `AapService: the settings screen closed with a USB auto-connect held ` | unit | **the held USB check ran at the close** | yes | yes |
 | `USB Intent: ` with `USB_DEVICE_DETACHED` | unit | the dongle was unplugged | yes | yes |
 | `Found device already in accessory mode`, `Switching USB device to accessory mode` | unit | a USB attempt began | yes | yes |
@@ -645,13 +647,20 @@ for k in 1 2 3 4; do
   close_settings; hold_until 42000
   P=$(nl); cue "H1: plug the dongle back into D-POCO"; usb_live $P && ok=1 || ok=0; E=$(nl)
   LP=$(lno $P 'Found device already in accessory mode'); [ $LP -eq 0 ] && LP=$(lno $P 'Switching USB device to accessory mode')
-  echo -e "U1-$k\theld=$(cntw 0 20000 'UsbLauncher: USB auto-connect held while the settings screen is open; ')\tdetach=$(cnt $CU $P 'USB_DEVICE_DETACHED')\tclose_check=$(cnt $CLOSE_LN $P 'AapService: the settings screen closed with a USB auto-connect held ')\tssl_before_plug=$(cnt $SAVE_LN $P 'SSL handshake complete')\tfallback_30=$(( $(cntw 29500 33000 'WifiLauncher: Initializing WiFi Mode: ') + $(cntw 29500 33000 'NetworkDiscovery: Starting scan...') ))\tusb_retry_line=$(cnt $SAVE_LN $E 'AapService: USB disconnect. Scheduling reconnect check in ')\tt_plug_ssl=$(dt $LP $(lno $P 'SSL handshake complete'))\treplug_session=$ok\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tfatal=$(cnt $S $E 'FATAL EXCEPTION')" | tee -a $OUT/U1-C.tsv
+  echo -e "U1-$k\theld=$(cntw 0 20000 'UsbLauncher: USB auto-connect held while the settings screen is open; ')\tdetach=$(cnt $CU $P 'USB_DEVICE_DETACHED')\tclose_check=$(cnt $CLOSE_LN $P 'AapService: the settings screen closed with a USB auto-connect held ')\tssl_before_plug=$(cnt $SAVE_LN $P 'SSL handshake complete')\tfallback_30=$(( $(cntw 29500 33000 'WifiLauncher: Initializing WiFi Mode: ') + $(cntw 29500 33000 'NetworkDiscovery: Starting scan...') ))\tusb_retry_line=$(cnt $SAVE_LN $E 'AapService: USB disconnect. Scheduling reconnect check in ')\tt_plug_ssl=$(dt $LP $(lno $P 'SSL handshake complete'))\treplug_session=$ok\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tsave_try=$(( $(cnt $SAVE_LN $CU 'Found device already in accessory mode') + $(cnt $SAVE_LN $CU 'Switching USB device to accessory mode') + $(cnt $SAVE_LN $CU 'Single USB auto-connect: connecting to') ))\traise_refused=$(cnt $SAVE_LN $CLOSE_LN 'AapService: Not raising the projection, the settings screen is open')\tfatal=$(cnt $S $E 'FATAL EXCEPTION')" | tee -a $OUT/U1-C.tsv
   done=$((done+1)); [ $done -ge 2 ] && break; sleep 20
 done
 r_close U1-C
 ```
 
-**PASS, on every completed cycle:** `held` 1 or more (within 20 s, because the dongle's own re-attach lands about 6 s after the Save); `detach` 1 or more after the unplug cue; `close_check` 1 or more; `ssl_before_plug` 0; `fallback_30` 1 or more (the fallback handed back to the ordinary rules at 30 s); `usb_retry_line` 0 (the Save path, not the ordinary USB retry); `replug_session` 1 with `t_plug_ssl` 60000 ms or less; `fatal` 0. Phone (D-MOTO): report `crit`; it is not graded (3.5). **FAIL:** a replug that forms no session in 90 s (the state stuck).
+**Name the path of each cycle first.** `path=save` when `ssl_before_plug` is 1 or more (the Save's own retry formed a USB session behind the screen). `path=held` when `ssl_before_plug` is 0 and `held` is 1 or more. Otherwise `path=none`. Record `path`, `save_try` and `raise_refused` on the cycle's row.
+
+**PASS, on every completed cycle:** `detach` 1 or more after the unplug cue; `replug_session` 1 with `t_plug_ssl` 60000 ms or less; `fatal` 0; and, by path:
+- `path=held`: `close_check` 1 or more; `fallback_30` 1 or more (the fallback handed back to the ordinary rules at 30 s); `usb_retry_line` 0.
+- `path=save`: `raise_refused` 1 or more (the session formed, and the screen stayed in front). `fallback_30` and `usb_retry_line` are reported, not graded, because the unplug ends a live session through the ordinary path.
+- `path=none`: `fallback_30` 1 or more.
+
+Phone (D-MOTO): report `crit`; it is not graded (3.5). **FAIL:** a replug that forms no session in 90 s (the state stuck), or `path=held` with `fallback_30` 0.
 
 ### U2 A USB Save with the settings screen kept open past 30 s (finding 2; C, 2 cycles, max 4)
 
@@ -664,13 +673,21 @@ for k in 1 2 3 4; do
   hand_save U2-$k || continue
   hold_until 42000; close_settings; C0=$CLOSE_LN; waitfor 60 'SSL handshake complete' $C0; E=$(nl)
   T_CLOSE=$(( $(ms "$(tat $C0)") - T0 ))
-  echo -e "U2-$k\tt_close=$T_CLOSE\theld=$(cntw 0 20000 'UsbLauncher: USB auto-connect held while the settings screen is open; ')\tarm_30_to_close=$(cntw 29500 $T_CLOSE 'WifiLauncher: Initializing WiFi Mode: NATIVE')\tgroups_30_to_close=$(cntw 29500 $T_CLOSE 'createGroup SUCCESS')\tpokes_30_to_close=$(cntw 29500 $T_CLOSE 'NativeAA: Attempting active poke to device')\tpoke_targets=$(sed -n "$SAVE_LN,${C0}p" "$CAP" | grep -aF 'NativeAA: Attempting active poke to device' | sed 's/.*device: //' | sort -u | paste -sd';')\tssl_before_close=$(cnt $SAVE_LN $C0 'SSL handshake complete')\tclose_check=$(cnt $C0 $E 'AapService: the settings screen closed with a USB auto-connect held ')\tt_close_ssl=$(dt $C0 $(lno $C0 'SSL handshake complete'))\tusb_attempt=$(( $(cnt $C0 $E 'Found device already in accessory mode') + $(cnt $C0 $E 'Switching USB device to accessory mode') ))\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tfatal=$(cnt $S $E 'FATAL EXCEPTION')" | tee -a $OUT/U2-C.tsv
+  echo -e "U2-$k\tt_close=$T_CLOSE\theld=$(cntw 0 20000 'UsbLauncher: USB auto-connect held while the settings screen is open; ')\tarm_30_to_close=$(cntw 29500 $T_CLOSE 'WifiLauncher: Initializing WiFi Mode: NATIVE')\tgroups_30_to_close=$(cntw 29500 $T_CLOSE 'createGroup SUCCESS')\tpokes_30_to_close=$(cntw 29500 $T_CLOSE 'NativeAA: Attempting active poke to device')\tpoke_targets=$(sed -n "$SAVE_LN,${C0}p" "$CAP" | grep -aF 'NativeAA: Attempting active poke to device' | sed 's/.*device: //' | sort -u | paste -sd';')\tssl_before_close=$(cnt $SAVE_LN $C0 'SSL handshake complete')\tclose_check=$(cnt $C0 $E 'AapService: the settings screen closed with a USB auto-connect held ')\tt_close_ssl=$(dt $C0 $(lno $C0 'SSL handshake complete'))\tusb_attempt=$(( $(cnt $C0 $E 'Found device already in accessory mode') + $(cnt $C0 $E 'Switching USB device to accessory mode') ))\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tusb_before_first_ssl=$(FS=$(lno $SAVE_LN 'SSL handshake complete'); [ $FS -eq 0 ] && echo NA || echo $(( $(cnt $SAVE_LN $FS 'Found device already in accessory mode') + $(cnt $SAVE_LN $FS 'Switching USB device to accessory mode') + $(cnt $SAVE_LN $FS 'Single USB auto-connect: connecting to') )))\traise_refused=$(cnt $SAVE_LN $C0 'AapService: Not raising the projection, the settings screen is open')\tfatal=$(cnt $S $E 'FATAL EXCEPTION')" | tee -a $OUT/U2-C.tsv
   done=$((done+1)); [ $done -ge 2 ] && break; sleep 20
 done
 r_close U2-C
 ```
 
-**Finding 2 verdict per cycle:** `finding 2 reproduced` when `arm_30_to_close` is 1 or more (wireless armed while the held USB check still waited for the screen); report `groups_30_to_close`, `pokes_30_to_close` and `poke_targets` as numbers and names. **PASS:** `held` 1 or more; `ssl_before_close` 0; `close_check` 1 or more; `t_close_ssl` 60000 ms or less with `usb_attempt` 1 or more (USB came back after the close despite the armed wireless stack); `fatal` 0. Phone (D-MOTO): report `crit`; it is not graded (3.5). **FAIL:** no SSL within 60 s of the close, or the first SSL after the close formed with no USB attempt line before it (a wireless session took the place of USB).
+**Name the path of each cycle first,** as in U1: `path=save` when `ssl_before_close` is 1 or more, `path=held` when it is 0 and `held` is 1 or more, otherwise `path=none`.
+
+**Finding 2 verdict per cycle:** `finding 2 reproduced` when `arm_30_to_close` is 1 or more (wireless armed while USB still waited for the screen); `finding 2 fixed` when `path=save` and `arm_30_to_close` is 0. Report `groups_30_to_close`, `pokes_30_to_close` and `poke_targets` as numbers and names.
+
+**PASS, by path:**
+- `path=save`: `usb_before_first_ssl` 1 or more (the session behind the screen is USB, not wireless); `raise_refused` 1 or more; `fatal` 0. `close_check`, `t_close_ssl` and `usb_attempt` are reported, not graded.
+- `path=held` or `path=none`: `close_check` 1 or more when `held` is 1 or more; `t_close_ssl` 60000 ms or less with `usb_attempt` 1 or more (USB came back after the close despite the armed wireless stack); `fatal` 0.
+
+Phone (D-MOTO): report `crit`; it is not graded (3.5). **FAIL:** `path=save` with `usb_before_first_ssl` 0 (a wireless session formed behind the screen), or on the other paths no SSL within 60 s of the close, or a first SSL after the close with no USB attempt line before it.
 
 **Closing Stage U:** as `pr-1065-reconnect-timers-round1-brief.md` closes it: `send ACTION_EXIT` to the running app, `headunit://exit`, `sleep 3`, force-stop, restore D-POCO's backup with `pocoput` and read it back, `cue "H1: unplug the dongle; put D-POCO back on its PC cable"`, `adb -s $POCO_IP:5555 usb`, then `HU=$DHU; PH=4f4027e9; PUT=hu_put; BASEXML=$OUT/settings-backup-DHU.xml; UNIT=D-HU`. D-POCO is a phone again from here, which is why it gets `headunit://exit` first (`rig-quirks/topics/wifi.md`).
 
@@ -736,7 +753,7 @@ Restore each unit's round backup of `settings.xml` (D-HU as root, `rig-quirks/un
 ```markdown
 # session-reconnect, round 2 results
 
-**Candidate C:** PR 1047 head @ c67b6d46a4576424bbe59c23773182abfd70bd7d   **Combo X tree:** <printed vs 9a4ade8efb6c901df1292552591b98a8a371eaae, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
+**Candidate C:** PR 1047 head @ dbf1e3a11e4b0d694a64ec12a829d007e112508b   **Combo X tree:** <printed vs 6e7426b0210a50062ab38437718be779720dc937, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
 **APK md5:** B <md5> / C <md5> / X <md5>
 **Units:** D-HU <API>, D-POCO <API, Gearhead>, D-MOTO <API, Gearhead>, D-SAM <API>, D-HP <API>
 **Date:** <yyyy-mm-dd>
@@ -783,7 +800,7 @@ One table each with the columns the run prints.
 |---|---|---|---|---|---|---|
 
 ## U1, U2
-One table each with the columns the run prints. Finding 2 reproduced: per cycle.
+One table each with the columns the run prints, plus `path` per cycle. Finding 2 reproduced or fixed: per cycle.
 
 ## D1, D2
 One row each.

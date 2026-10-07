@@ -85,8 +85,8 @@ were reported under another filename, and are listed so the pairing rule does no
 - `launcher-auto-connect-crash-round1-brief.md` (D-HU as HOME with D-POCO; wireless bring-up must not wait for the screen)
 - `bluetooth-audio-disabled-usb-connect-round1-brief.md` (measurement; probe build, three announced Bluetooth addresses, phone A2DP policy)
 - `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366`, two 20 min and two 15 min soaks)
-- `pr-1046-video-retirement-round2-brief.md` (candidate `c04aa0e0`, re-pinned from `4bb70c93`, A/B on D-HU with D-POCO; GLES screen-off returns and a reconnect; unattended after one hand step)
-- `pr-1047-session-reconnect-round2-brief.md` (candidate `c67b6d46` and combo tree `7839b501`; every Save is an operator tap; Stage N not run)
+- `pr-1046-video-retirement-round2-brief.md` (candidate `b749525d`, re-pinned from `c04aa0e0`, A/B on D-HU with D-POCO; GLES screen-off returns and a reconnect; unattended after one hand step)
+- `pr-1047-session-reconnect-round2-brief.md` (candidate `dbf1e3a1` and combo tree `6e7426b0`; U1 and U2 grade the Save path and the held path apart; every Save is an operator tap; Stage N not run)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
