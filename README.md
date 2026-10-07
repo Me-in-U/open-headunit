@@ -81,6 +81,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
 - `pr-1067-tls-pump-round2-brief.md` (candidate `7e7cbf53`, which fixes the ByeBye blocker; A/B on D-HU with D-POCO; 20 operator exits and two 15 min soaks, about 1.5 h; replaces round 1)
+- `update-direct-apk-link-round1-brief.md` (candidate `4ebe61bc` with a local test version name; D-SAM and D-HP with Firefox 68, D-HU as control; no phone; hand taps for the update dialog)
 - `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366`, two 20 min and two 15 min soaks)
 - `pr-1046-video-retirement-round2-brief.md` (candidate `b749525d`, re-pinned from `c04aa0e0`, A/B on D-HU with D-POCO; GLES screen-off returns and a reconnect; unattended after one hand step)
 - `pr-1047-session-reconnect-round2-brief.md` (candidate `b62d86c2` and combo tree `f55db829`; U1 and U2 grade the Save path and the held path apart; every Save is an operator tap; Stage N not run)
@@ -116,6 +117,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
+| `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |
 | `bluetooth-audio-disabled-usb-connect` | ROUND 3 DONE | `bluetooth-audio-disabled-usb-connect-round3-results.md`, SHA `fff96699`. U5a PASS (5 of 5 pulls RESTORED), N0p/N4a/N4b PASS. Harness verb count is one short; N4a2 void (operator touch), N4a2x re-run. |
 | `projection-teardown-and-relays` | **Round 3 DONE** | `projection-teardown-and-relays-round3-results.md`. R0, R4E-B, R4E-C, R4-C (3 IN_WINDOW: 1 adopt, 2 join, SSL 3/3), R4L-C all PASS on `a70ba7e2`; early-dial reset did not reproduce. R4L-C redial left no picture in 45 s (report-only). |
