@@ -68,6 +68,10 @@ class Settings(private val context: Context) {
         get() = prefs.getString("bt-address", "")!!
         set(value) = prefs.edit().putString("bt-address", value).apply()
 
+    var bluetoothAnnounceMode: String?
+        get() = prefs.getString("bt-announce", null)
+        set(value) = prefs.edit().putString("bt-announce", value).apply()
+
     var lastKnownLocation: Location
         get() {
             val latitudeBits = prefs.getLong("last-loc-latitude", (32.0864169).toRawBits())
