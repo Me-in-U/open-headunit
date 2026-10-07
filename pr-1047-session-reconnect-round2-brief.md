@@ -9,25 +9,25 @@ Three APKs. Build each with `build_hur.sh` and copy it out of `apks/` the moment
 | Arm | Code | Identity | Gate |
 |---|---|---|---|
 | **B** (baseline) | `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | `run_unit_tests.sh`: 0 failures; record the count |
-| **C** (candidate) | the PR head, based directly on B | commit `dbf1e3a11e4b0d694a64ec12a829d007e112508b` | 2770 JVM tests, 0 failures |
-| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `6e7426b0210a50062ab38437718be779720dc937` | 0 failures; record the count |
+| **C** (candidate) | the PR head, based directly on B | commit `b62d86c29d005c7cedce81d65d48fd2649b8e4f6` | 2772 JVM tests, 0 failures |
+| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `f55db829d6aa7518a9a52ee33d51cc87d2cf323e` | 0 failures; record the count |
 
 ```bash
 git fetch https://github.com/andreknieriem/open-headunit.git pull/1047/head pull/1046/head pull/1045/head
-git cat-file -e dbf1e3a11e4b0d694a64ec12a829d007e112508b || echo "C MISSING"
+git cat-file -e b62d86c29d005c7cedce81d65d48fd2649b8e4f6 || echo "C MISSING"
 git checkout -B arm-B 145a0c762f0a87386ca63b54518ea5e861b290be
-git checkout -B arm-C dbf1e3a11e4b0d694a64ec12a829d007e112508b
-git log --oneline 145a0c76..HEAD | wc -l          # 21
+git checkout -B arm-C b62d86c29d005c7cedce81d65d48fd2649b8e4f6
+git log --oneline 145a0c76..HEAD | wc -l          # 22
 git merge-base HEAD 145a0c76                       # 145a0c762f0a87386ca63b54518ea5e861b290be
 # X: built locally, so nothing depends on a merge commit someone else made
 git checkout -B arm-X 145a0c762f0a87386ca63b54518ea5e861b290be
 git merge --no-edit 9b8f83664cc5081f3d023ac699c0b5fe757334c6    # PR 1045 head
 git merge --no-edit b749525d8c4b05cfcbb2a631afb727c344731e5d    # PR 1046 head
-git merge --no-edit dbf1e3a11e4b0d694a64ec12a829d007e112508b    # PR 1047 head (C)
-git rev-parse 'HEAD^{tree}'                        # MUST print 6e7426b0210a50062ab38437718be779720dc937
+git merge --no-edit b62d86c29d005c7cedce81d65d48fd2649b8e4f6    # PR 1047 head (C)
+git rev-parse 'HEAD^{tree}'                        # MUST print f55db829d6aa7518a9a52ee33d51cc87d2cf323e
 ```
 
-C is the PR head as it is, rebased by its author onto `main` 145a0c76, so B and C differ by the PR's 21 commits and nothing else. Nothing on the transfer branch was rewritten since round 1.
+C is the PR head as it is, rebased by its author onto `main` 145a0c76, so B and C differ by the PR's 22 commits and nothing else. Nothing on the transfer branch was rewritten since round 1.
 
 **If `C MISSING` prints, stop the round and escalate:** the PR head moved. **If X's tree differs, or a merge conflicts, or X fails its unit tests, do not build X.** Every X run is then UNTESTABLE; record what printed and carry on with B and C. The merge commits stay local: do not push them.
 
@@ -44,7 +44,7 @@ unzip -p installed.apk 'classes*.dex' | strings | grep -cF '<symbol>'
 | `AapMessageReassembler` (PR 1045) | 0 | 0 | 1 or more |
 | `outputPublicationLock` (PR 1046) | 0 | 0 | 1 or more |
 
-The source trees agree: `SettingsRestartRecovery` is in 0 files on B and 4 on C and X; `AapMessageReassembler` is in 0 on B and C and 4 on X; `outputPublicationLock` is in 0 on B and C and 1 on X. Also send `ACTION_QUERY_STATE` and record `commit`: B's must start `145a0c76`, C's `dbf1e3a1`; X's is the local merge commit (record it). Record every APK md5 from a real `adb pull` plus a local `md5sum`. The three must differ.
+The source trees agree: `SettingsRestartRecovery` is in 0 files on B and 4 on C and X; `AapMessageReassembler` is in 0 on B and C and 4 on X; `outputPublicationLock` is in 0 on B and C and 1 on X. Also send `ACTION_QUERY_STATE` and record `commit`: B's must start `145a0c76`, C's `b62d86c2`; X's is the local merge commit (record it). Record every APK md5 from a real `adb pull` plus a local `md5sum`. The three must differ.
 
 ## 2. What this is and why it exists
 
@@ -66,7 +66,7 @@ Our review of round 2 (`reply-1047-r2`) asked for a reason of its own, which the
 - **Finding 1 (should fix):** in Helper WiFi Direct, the 30 s fallback runs `restartDiscovery()`, which reaches `checkGroupAndCreate()` and recreates the group, possibly under a phone that is still joining it. A smaller form exists on Nearby.
 - **Finding 2 (should fix):** on USB, the Save's own retry is held while the settings screen is open (`HOLD_FOR_SETTINGS`). If the user stays on the screen past 30 s, the fallback arms wireless before the held USB check runs.
 - **Finding 3 (note, changed in `afb121d3`):** `ACTION_DISCONNECT` during the window now revokes the Save, so the 30 s fallback does not fire. It still does not set `userExitedAA`, and in Native mode the revoke lifts the wake hold at once, so the next credential delivery can poke the phone within seconds of the disconnect. This round does not build a run for it.
-- **New (should fix, not reached by this round):** `SettingsFragment.saveSettings` sends `ACTION_STOP_WIRELESS` before `applyAudioSettings()` when wireless is switched off or set to Manual in the same Save, and that action now revokes the pending Save. The session ends and nothing reconnects. The audio streams screen this round saves from sends no wireless intent.
+- **Fixed in `b62d86c2`, was a should-fix, not reached by this round:** `SettingsFragment.saveSettings` sent `ACTION_STOP_WIRELESS` before `applyAudioSettings()` when wireless is switched off or set to Manual in the same Save, and that action now revokes the pending Save. The session ends and nothing reconnects. The audio streams screen this round saves from sends no wireless intent.
 - **Finding 6 (note):** `SettingsRestartRecovery` logs nothing when it fires. So this brief grades the fallback from the lines its routes print (`AapService: WiFi Direct credential refresh requested.`, `WifiLauncher: Initializing WiFi Mode:`, `NetworkDiscovery: Starting scan...`, `NearbyManager: Starting Nearby (Discoverer only)...`).
 - **New on `dbf1e3a1` (changes U1 and U2):** the Save's own USB retry now carries the Save and is no longer held by the open settings screen. It can form a USB session behind the screen; the projection raise is still refused there (`AapService: Not raising the projection, the settings screen is open`). A re-attach that arrives through the ordinary USB attach broadcast carries no Save and is still held. On this rig the dongle drops off and comes back in normal mode at every session end (3.5), so either path can run. U1 and U2 therefore report which path ran and grade each path on its own terms.
 - **Also new:** `31c71b6b` (a first session that ends before its live states are seen still ends cleanly) and `27328bb7` (a Save on a Self Mode session restores the Self route and its VPN). Neither changes a run here.
@@ -189,7 +189,7 @@ D2KEYS="int:wifi-connection-mode=1 int:log-level=2 int:onboarding-version=2 bool
 
 ## 5. The lines that decide the runs
 
-Each unit line was checked with `grep -F` against `app/src/main` (and `contract/src` for the reason) of B (`145a0c76`), C (`dbf1e3a1`) and the X tree. Every one prints at INFO, so `log-level=2` carries all of them. `AapService: session state <state> (<reason>)` is composed at run time; the reasons are constants in `HeadUnitIntent.kt`.
+Each unit line was checked with `grep -F` against `app/src/main` (and `contract/src` for the reason) of B (`145a0c76`), C (`b62d86c2`) and the X tree. Every one prints at INFO, so `log-level=2` carries all of them. `AapService: session state <state> (<reason>)` is composed at run time; the reasons are constants in `HeadUnitIntent.kt`.
 
 | Line (fixed substring) | File | Meaning | B | C, X |
 |---|---|---|---|---|
@@ -753,7 +753,7 @@ Restore each unit's round backup of `settings.xml` (D-HU as root, `rig-quirks/un
 ```markdown
 # session-reconnect, round 2 results
 
-**Candidate C:** PR 1047 head @ dbf1e3a11e4b0d694a64ec12a829d007e112508b   **Combo X tree:** <printed vs 6e7426b0210a50062ab38437718be779720dc937, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
+**Candidate C:** PR 1047 head @ b62d86c29d005c7cedce81d65d48fd2649b8e4f6   **Combo X tree:** <printed vs f55db829d6aa7518a9a52ee33d51cc87d2cf323e, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
 **APK md5:** B <md5> / C <md5> / X <md5>
 **Units:** D-HU <API>, D-POCO <API, Gearhead>, D-MOTO <API, Gearhead>, D-SAM <API>, D-HP <API>
 **Date:** <yyyy-mm-dd>

@@ -11,21 +11,21 @@ Two APKs. Build each with `build_hur_cool.sh` (or `build_hur.sh` under the therm
 | Arm | Code | Identity | Gate |
 |---|---|---|---|
 | **B** (baseline) | upstream `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | JVM tests 2738, 0 failures |
-| **C** (candidate) | the contributor's branch `codex/tls-post-handshake` at `45cd6fdeef0a47ef17a87b7911c94f0ec14b5507`: six commits directly on `main` 145a0c76, no merge | tree `0cbcb5fc50d4dc4af70923eed6d3428bffb2ed2e` | JVM tests 2741, 0 failures; `TlsApplicationPumpTest`, `AapTlsWriterTest`, `AapSslSessionTest`, `TlsEmptyTailReaderTest`, `TlsVideoAccountingTest` and `PeerCloseReasonTest` present and passing |
+| **C** (candidate) | the contributor's branch `codex/tls-post-handshake` at `7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0`: eight commits directly on `main` 145a0c76, no merge | tree `a01a121b4e017eb0d0865557fdcb960c9c82fc54` | JVM tests 2745, 0 failures; `TlsApplicationPumpTest`, `AapTlsWriterTest`, `AapSslSessionTest`, `TlsEmptyTailReaderTest`, `TlsVideoAccountingTest` and `PeerCloseReasonTest`, `ApplicationSendReadinessTest` and `MicrophoneWriteFailureTest` present and passing |
 
 ```bash
 git fetch https://github.com/andreknieriem/open-headunit.git main
 git fetch https://github.com/emotionbug/open-headunit.git codex/tls-post-handshake
 git checkout -B arm-1067-B 145a0c762f0a87386ca63b54518ea5e861b290be
-git checkout -B arm-1067-C 45cd6fdeef0a47ef17a87b7911c94f0ec14b5507
-git rev-parse 'HEAD^{tree}'        # MUST print 0cbcb5fc50d4dc4af70923eed6d3428bffb2ed2e
+git checkout -B arm-1067-C 7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0
+git rev-parse 'HEAD^{tree}'        # MUST print a01a121b4e017eb0d0865557fdcb960c9c82fc54
 ```
 
-**If the branch head is not `45cd6fde`, stop and report the new head.** The contributor rebases often. If the new head's tree is `0cbcb5fc...`, build it and say so. Any other tree needs a new brief.
+**If the branch head is not `7e7cbf53`, stop and report the new head.** The contributor rebases often. If the new head's tree is `a01a121b...`, build it and say so. Any other tree needs a new brief.
 
 **B may be reused.** The pr-1063, pr-1065 and pr-1066 rounds built `145a0c76` as md5 `3100817484e47e9a6418753308e92ed1` with 2738 tests. If that APK is still on disk with that md5, reuse it and do not rebuild. Say which in Setup notes.
 
-The six test classes above must not exist on B. A build or test failure stops the round.
+The eight test classes above must not exist on B. A build or test failure stops the round.
 
 **Identity, per arm, before the first run on D-HU.** Pull the installed APK and hash it locally (`apk_check`). Then count a string only C carries:
 
@@ -33,13 +33,13 @@ The six test classes above must not exist on B. A build or test failure stops th
 unzip -p $OUT/live.apk 'classes*.dex' | strings | grep -cF 'encrypted write failed or incomplete'     # B: 0, C: 1 or more
 ```
 
-Also `send ACTION_QUERY_STATE` and record `commit` (B starts `145a0c76`, C starts `45cd6fde`). A mismatch voids that arm's runs: reinstall once, then mark them UNTESTABLE.
+Also `send ACTION_QUERY_STATE` and record `commit` (B starts `145a0c76`, C starts `7e7cbf53`). A mismatch voids that arm's runs: reinstall once, then mark them UNTESTABLE.
 
 ## 2. What this is and why
 
 The change replaces the single TLS `wrap` and `unwrap` with loops (`TlsApplicationPump`), gives each transport its own TLS engine, and sends any TLS control record the engine makes after the handshake through a new writer (`AapTlsWriter`). The fifth commit, new since round 1's brief, changes the fragment audit. The review is `~/projects/ohu-project/ohu-fixes-handoff/pr-1063-1067/pr-1067-review.md` on the authoring machine.
 
-**Finding 1, and the point of this round.** The review found this blocker at `3b05fe81`. The sixth commit, `45cd6fde`, fixes it: a ByeBye or a Helper close marker now sets `peerRequestedClose` before any write, and `quit()` reports `clean || peerRequestedClose` under one lock. This round proves the fix on hardware. The defect, as found: on C, the send thread calls `quit()` with `clean = false` when an encrypted write fails. `quit()` acts only for its first caller. When the phone sends a ByeBye, `AapControl.byebyeRequest` sends the response, sleeps 500 ms on the poll thread, and only then calls `quit(clean = true)`. If the phone closes the link inside those 500 ms and a media ack or a sensor message goes out, the write fails (EPIPE after the phone's FIN), and the send thread quits first. The session then ends as a lost link: `AapProjectionActivity` shows the reconnecting overlay instead of finishing, `AapService` reports `link_lost`, and the app may retry a session the user ended. On B the same failed write only logs `AapTransport: send failed (ret=` and the session still ends clean. The review proved this from the code. This round measures how often it happens on hardware.
+**Finding 1, and the point of this round.** The review found this blocker at `3b05fe81`. The sixth commit, `45cd6fde`, fixes it: a ByeBye or a Helper close marker now sets `peerRequestedClose` before any write, and `quit()` reports `clean || peerRequestedClose` under one lock. This round proves the fix on hardware. Two later commits change nothing it grades: `1c147e43` holds application writes until AuthComplete is on the wire, and `7e7cbf53` ends the session when a microphone write fails, as other writes already did. The defect, as found: on C, the send thread calls `quit()` with `clean = false` when an encrypted write fails. `quit()` acts only for its first caller. When the phone sends a ByeBye, `AapControl.byebyeRequest` sends the response, sleeps 500 ms on the poll thread, and only then calls `quit(clean = true)`. If the phone closes the link inside those 500 ms and a media ack or a sensor message goes out, the write fails (EPIPE after the phone's FIN), and the send thread quits first. The session then ends as a lost link: `AapProjectionActivity` shows the reconnecting overlay instead of finishing, `AapService` reports `link_lost`, and the app may retry a session the user ended. On B the same failed write only logs `AapTransport: send failed (ret=` and the session still ends clean. The review proved this from the code. This round measures how often it happens on hardware.
 
 **What exposes it.** Only a ByeBye followed by a write failure inside the 500 ms. B shows how often that happens: every B exit with `AapTransport: send failed (ret=` between the ByeBye and the quitting line is an exit where C would go unclean.
 
@@ -344,7 +344,7 @@ main()
 
 ## 5. The deciding lines
 
-Head unit lines, checked with `git grep -F` against the B tree (`145a0c76`) and the C tree (`0cbcb5fc`). "Composed" means the source builds the printed text from a format; the printed form is what the extractor greps.
+Head unit lines, checked with `git grep -F` against the B tree (`145a0c76`) and the C tree (`a01a121b`). "Composed" means the source builds the printed text from a format; the printed form is what the extractor greps.
 
 | Line | Source | Level | B | C | Used for |
 |---|---|---|---|---|---|
@@ -391,7 +391,7 @@ Between runs: `close_run` ends the run; restore the backup with `$PUT`; write on
 2. Both APKs built (or B reused) and copied out; two different md5s.
 3. After each install: the identity check in section 1 prints the expected count, and `ACTION_QUERY_STATE` returns the expected `commit`.
 
-**PASS:** all three. A build or test failure, or a tree other than `0cbcb5fc...`, stops the round.
+**PASS:** all three. A build or test failure, or a tree other than `a01a121b...`, stops the round.
 
 ### XW-B and XW-C. Ten phone exits per arm (**the point of the round**)
 
