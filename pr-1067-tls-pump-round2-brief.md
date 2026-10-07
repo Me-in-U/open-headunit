@@ -11,21 +11,21 @@ Two APKs. Build each with `build_hur_cool.sh` (or `build_hur.sh` under the therm
 | Arm | Code | Identity | Gate |
 |---|---|---|---|
 | **B** (baseline) | upstream `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | JVM tests 2738, 0 failures |
-| **C** (candidate) | the contributor's branch `codex/tls-post-handshake` at `3b05fe8120a4d85caa12d741234a8b2544c3cbca`: five commits directly on `main` 145a0c76, no merge | tree `10011afc2ce8291d2002a9f48fe3de56cf54d4be` | JVM tests 2737, 0 failures; `TlsApplicationPumpTest`, `AapTlsWriterTest`, `AapSslSessionTest`, `TlsEmptyTailReaderTest` and `TlsVideoAccountingTest` present and passing |
+| **C** (candidate) | the contributor's branch `codex/tls-post-handshake` at `45cd6fdeef0a47ef17a87b7911c94f0ec14b5507`: six commits directly on `main` 145a0c76, no merge | tree `0cbcb5fc50d4dc4af70923eed6d3428bffb2ed2e` | JVM tests 2741, 0 failures; `TlsApplicationPumpTest`, `AapTlsWriterTest`, `AapSslSessionTest`, `TlsEmptyTailReaderTest`, `TlsVideoAccountingTest` and `PeerCloseReasonTest` present and passing |
 
 ```bash
 git fetch https://github.com/andreknieriem/open-headunit.git main
 git fetch https://github.com/emotionbug/open-headunit.git codex/tls-post-handshake
 git checkout -B arm-1067-B 145a0c762f0a87386ca63b54518ea5e861b290be
-git checkout -B arm-1067-C 3b05fe8120a4d85caa12d741234a8b2544c3cbca
-git rev-parse 'HEAD^{tree}'        # MUST print 10011afc2ce8291d2002a9f48fe3de56cf54d4be
+git checkout -B arm-1067-C 45cd6fdeef0a47ef17a87b7911c94f0ec14b5507
+git rev-parse 'HEAD^{tree}'        # MUST print 0cbcb5fc50d4dc4af70923eed6d3428bffb2ed2e
 ```
 
-**If the branch head is not `3b05fe81`, stop and report the new head.** The contributor rebases often. If the new head's tree is `10011afc...`, build it and say so. Any other tree needs a new brief.
+**If the branch head is not `45cd6fde`, stop and report the new head.** The contributor rebases often. If the new head's tree is `0cbcb5fc...`, build it and say so. Any other tree needs a new brief.
 
 **B may be reused.** The pr-1063, pr-1065 and pr-1066 rounds built `145a0c76` as md5 `3100817484e47e9a6418753308e92ed1` with 2738 tests. If that APK is still on disk with that md5, reuse it and do not rebuild. Say which in Setup notes.
 
-The five test classes above must not exist on B. A build or test failure stops the round.
+The six test classes above must not exist on B. A build or test failure stops the round.
 
 **Identity, per arm, before the first run on D-HU.** Pull the installed APK and hash it locally (`apk_check`). Then count a string only C carries:
 
@@ -33,13 +33,13 @@ The five test classes above must not exist on B. A build or test failure stops t
 unzip -p $OUT/live.apk 'classes*.dex' | strings | grep -cF 'encrypted write failed or incomplete'     # B: 0, C: 1 or more
 ```
 
-Also `send ACTION_QUERY_STATE` and record `commit` (B starts `145a0c76`, C starts `3b05fe81`). A mismatch voids that arm's runs: reinstall once, then mark them UNTESTABLE.
+Also `send ACTION_QUERY_STATE` and record `commit` (B starts `145a0c76`, C starts `45cd6fde`). A mismatch voids that arm's runs: reinstall once, then mark them UNTESTABLE.
 
 ## 2. What this is and why
 
 The change replaces the single TLS `wrap` and `unwrap` with loops (`TlsApplicationPump`), gives each transport its own TLS engine, and sends any TLS control record the engine makes after the handshake through a new writer (`AapTlsWriter`). The fifth commit, new since round 1's brief, changes the fragment audit. The review is `~/projects/ohu-project/ohu-fixes-handoff/pr-1063-1067/pr-1067-review.md` on the authoring machine.
 
-**Finding 1, blocking, and the point of this round.** On C, the send thread calls `quit()` with `clean = false` when an encrypted write fails. `quit()` acts only for its first caller. When the phone sends a ByeBye, `AapControl.byebyeRequest` sends the response, sleeps 500 ms on the poll thread, and only then calls `quit(clean = true)`. If the phone closes the link inside those 500 ms and a media ack or a sensor message goes out, the write fails (EPIPE after the phone's FIN), and the send thread quits first. The session then ends as a lost link: `AapProjectionActivity` shows the reconnecting overlay instead of finishing, `AapService` reports `link_lost`, and the app may retry a session the user ended. On B the same failed write only logs `AapTransport: send failed (ret=` and the session still ends clean. The review proved this from the code. This round measures how often it happens on hardware.
+**Finding 1, and the point of this round.** The review found this blocker at `3b05fe81`. The sixth commit, `45cd6fde`, fixes it: a ByeBye or a Helper close marker now sets `peerRequestedClose` before any write, and `quit()` reports `clean || peerRequestedClose` under one lock. This round proves the fix on hardware. The defect, as found: on C, the send thread calls `quit()` with `clean = false` when an encrypted write fails. `quit()` acts only for its first caller. When the phone sends a ByeBye, `AapControl.byebyeRequest` sends the response, sleeps 500 ms on the poll thread, and only then calls `quit(clean = true)`. If the phone closes the link inside those 500 ms and a media ack or a sensor message goes out, the write fails (EPIPE after the phone's FIN), and the send thread quits first. The session then ends as a lost link: `AapProjectionActivity` shows the reconnecting overlay instead of finishing, `AapService` reports `link_lost`, and the app may retry a session the user ended. On B the same failed write only logs `AapTransport: send failed (ret=` and the session still ends clean. The review proved this from the code. This round measures how often it happens on hardware.
 
 **What exposes it.** Only a ByeBye followed by a write failure inside the 500 ms. B shows how often that happens: every B exit with `AapTransport: send failed (ret=` between the ByeBye and the quitting line is an exit where C would go unclean.
 
@@ -344,7 +344,7 @@ main()
 
 ## 5. The deciding lines
 
-Head unit lines, checked with `git grep -F` against the B tree (`145a0c76`) and the C tree (`10011afc`). "Composed" means the source builds the printed text from a format; the printed form is what the extractor greps.
+Head unit lines, checked with `git grep -F` against the B tree (`145a0c76`) and the C tree (`0cbcb5fc`). "Composed" means the source builds the printed text from a format; the printed form is what the extractor greps.
 
 | Line | Source | Level | B | C | Used for |
 |---|---|---|---|---|---|
@@ -391,7 +391,7 @@ Between runs: `close_run` ends the run; restore the backup with `$PUT`; write on
 2. Both APKs built (or B reused) and copied out; two different md5s.
 3. After each install: the identity check in section 1 prints the expected count, and `ACTION_QUERY_STATE` returns the expected `commit`.
 
-**PASS:** all three. A build or test failure, or a tree other than `10011afc...`, stops the round.
+**PASS:** all three. A build or test failure, or a tree other than `0cbcb5fc...`, stops the round.
 
 ### XW-B and XW-C. Ten phone exits per arm (**the point of the round**)
 
@@ -415,9 +415,9 @@ Per exit, from `XW-<arm>.json` `exits[]`: `bye`, `first_quit_clean`, `bye_to_qui
 
 **Grade, per arm.** A graded exit has `bye` 1 and passed the discard rules. `d` is the number of graded exits with `defect` 1 (the first quitting line after the ByeBye reads `clean=false`, or `Disconnected unexpectedly.`, or `state_reason` `link_lost`). On B, `e_B` is the number of graded exits with `send_failed_old_bye_to_quit` of 1 or more: each is an exit where the write failed inside the 500 ms, so C would have quit unclean.
 
-- **FAIL (finding 1 confirmed on hardware):** `d` on XW-C is 1 or more. Quote, for each defect exit, the ByeBye line, every `AapTransport: encrypted write failed or incomplete` line, the first quitting line and the session state line, with timestamps.
-- **PASS:** `d` on XW-C is 0, XW-C has 8 or more graded exits, `d` on XW-B is 0, and `e_B` on XW-B is 3 or more.
-- **INCONCLUSIVE:** `d` on XW-C is 0 and `e_B` is under 3 (the race did not happen often enough on B to expose C), or either arm has under 8 graded exits, or XW-B itself shows `d` above 0 (then quote it: B has a second unclean path, and the arms are compared by `d` only).
+- **FAIL (the fix in `45cd6fde` does not hold):** `d` on XW-C is 1 or more. Quote, for each defect exit, the ByeBye line, every `AapTransport: encrypted write failed or incomplete` line, the first quitting line and the session state line, with timestamps.
+- **PASS:** `d` on XW-C is 0, XW-C has 8 or more graded exits, `d` on XW-B is 0, and the race happened often enough to expose C: `e_B` on XW-B is 3 or more, or `e_C` on XW-C is 3 or more. `e_C` is the number of graded C exits with `enc_write_failed_bye_to_quit` of 1 or more; each one is a direct proof, because the write failed inside the 500 ms and the exit still ended clean.
+- **INCONCLUSIVE:** `d` on XW-C is 0 and both `e_B` and `e_C` are under 3 (the race did not happen often enough to expose C), or either arm has under 8 graded exits, or XW-B itself shows `d` above 0 (then quote it: B has a second unclean path, and the arms are compared by `d` only).
 - **Either arm:** a `critical_lines` entry that names a protocol refusal is a FAIL of that arm; quote it.
 
 Report per arm: the median `bye_to_quit_ms` (B should be about 500), the count of `reconnect=` results by kind (`auto`, `verb`), and `tls_cannot_continue` and `ssl_decrypt_failed` after the ByeBye (expected 0, because the poll thread sleeps through the 500 ms).
@@ -482,7 +482,7 @@ Read `reconnects_in_process` and `reconnects_same_session_id` in XW-B and XW-C. 
 
 ## 9. Report back
 
-1. XW: `d` on each arm, `e_B`, graded exits per arm, and every defect exit's quoted lines. **These decide the merge.**
+1. XW: `d` on each arm, `e_B`, `e_C`, graded exits per arm, and every defect exit's quoted lines. **These decide the merge.**
 2. KW: one row per arm with every field named in KW, and the audit lines quoted if any printed.
 3. P: the B sums and the C sum, with the reachability counts.
 4. F5: `send_failed_old_survived_10s` summed over the B captures.

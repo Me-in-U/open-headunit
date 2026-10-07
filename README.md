@@ -80,7 +80,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
-- `pr-1067-tls-pump-round2-brief.md` (candidate `3b05fe81`, A/B on D-HU with D-POCO; 20 operator exits and two 15 min soaks, about 1.5 h; replaces round 1)
+- `pr-1067-tls-pump-round2-brief.md` (candidate `45cd6fde`, which fixes the ByeBye blocker; A/B on D-HU with D-POCO; 20 operator exits and two 15 min soaks, about 1.5 h; replaces round 1)
 - `self-mode-vpn-release-round1-brief.md` (candidate `2a91ee33` vs `145a0c76`; Self Mode must release the dummy VPN once the session is up)
 - `launcher-auto-connect-crash-round1-brief.md` (D-HU as HOME with D-POCO; wireless bring-up must not wait for the screen)
 - `bluetooth-audio-disabled-usb-connect-round1-brief.md` (measurement; probe build, three announced Bluetooth addresses, phone A2DP policy)
@@ -128,7 +128,7 @@ by `bssid-round1-results.md` and its addendum.
 | `pr-1064-nearby-attempts` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1064-nearby-attempts-round1-results.md`. R0 PASS; N0 B 0/3 (Gearhead 17.9 refuses the helper launch), N1-N3 stopped; U1 B dongle never spent its budget, C not run. |
 | `pr-1065-reconnect-timers` | Round 1 reported, U1 INCONCLUSIVE | `pr-1065-reconnect-timers-round1-results.md`. C = `de1f9848` (same tree as brief). H 10/10 and N 5/5 match B; U1 all cycles masked by dongle re-enumeration; P INCONCLUSIVE (Gearhead 17.9 refuses helper). |
 | `pr-1066-byebye-priority` | Round 1 done, all six read FAIL on phone `crit` 0 only | `pr-1066-byebye-priority-round1-results.md`. ByeBye write SENT on 13 of 13 M exits, stop_to_quit 150 to 2-10 ms, phone receipt 12 of 13 (H-M-x5 none), no loss signature. Drop the `crit` 0 rule. |
-| `pr-1067-tls-pump` | Round 2 queued; round 1 never run | `pr-1067-tls-pump-round2-brief.md`. `145a0c76` vs `3b05fe81`. Round 1 brief (6 h, three stages) is superseded: do not run it. |
+| `pr-1067-tls-pump` | Round 2 queued; round 1 never run | `pr-1067-tls-pump-round2-brief.md`. `145a0c76` vs `45cd6fde`. Round 1 brief (6 h, three stages) is superseded: do not run it. |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
 | `home-wifi-reconnect-mid-session` | Round 2 reported (D-SAM): R2 PASS (4 joins, 4 answered in 1.11 to 1.15 s), R5 INCONCLUSIVE (A-R2a session lost, restore not reached), R6 measured (7 link stalls joined vs 0 stood down) | `home-wifi-reconnect-mid-session-round2-results.md`, candidate `9676eee4`. |
 | `rig-sdlc` | **DONE, adopted** | `rig-sdlc/README.md`: `/rig-round`, host-driven (no workflow on the rig), Haiku `rig-executor` in the foreground; install steps inside. |
