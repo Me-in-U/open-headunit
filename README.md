@@ -85,6 +85,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `pr-1065-reconnect-timers-round1-brief.md` (USB stage first, needs an operator)
 - `pr-1066-byebye-priority-round1-brief.md` (USB stage needs an operator)
 - `pr-1067-tls-pump-round1-brief.md` (40 operator exits in the Android Auto UI)
+- `fps-overlay-compact-round1-brief.md` (D-HU with D-POCO; five Native AA sessions and nine settings dumps, about 1 h 15 min plus the build)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -146,6 +147,7 @@ by `bssid-round1-results.md` and its addendum.
 | `hands-free-wake-verdict` | **DONE, round 1 PASS** | `hands-free-wake-verdict-round1-results.md`, candidate `945e1b20`. V1-V3 PASS on D-HU/D-POCO (counter 4→5→1, verdict DESTRUCTIVE 30s after the wake, no radio-cycle on SDK 34). V4 not reached (row off first screen). V5 addendum on D-SAM: INCONCLUSIVE, candidate and baseline both hit the grep 4x with no crash — Dalvik VFY noise, not a discriminator on this unit. |
 | `status-pill-stuck-after-disconnect` | **DONE** | status-pill-stuck-after-disconnect-report.md for the root cause; fix on `fix/audio-sink-and-wireless-bring-up` `8bb8b844` confirmed by audio-sink-jitter-round4-results.md N1-N3, all PASS. D-POCO does not return unaided within 5 min after N1's standdown; the WiFi button does. N2's settle gap measured ~3.8-5.4s, no `-11` this run. Nothing queued. |
 | `fps-overlay-temp-and-cpu` | **CLOSED** | fps-overlay-temp-and-cpu-findings.md; PC + one read-only adb dump on D-HU, no round. Root cause found for both: temp EINVAL on 2/19 MT50 thermal zones nulls the whole scan (not per-zone isolated); app CPU% unnormalized against core count. Suggested follow-up (not queued): extract overlay to its own file, add left/right placement. |
+| `fps-overlay-compact` | **QUEUED** | `fps-overlay-compact-round1-brief.md`. Candidate `398b54b1` on `feat/fps-overlay-compact`; overlay prints only chosen lines, settings on own screen. |
 | `hp-slate-bringup` | **DONE** | hp-slate-bringup-round1-results.md; R0-R2 PASS, R3 FAIL with root cause found (FPS overlay hidden under TEXTURE view-mode by an addView-order bug in `AapProjectionActivity`, not device-specific). "Can't export logs" was a wrong retrieval path (`/storage/sdcard0/...`, not `/storage/emulated/0/...`) — export itself works. Fix not applied this round (scope). |
 | `t230-native-aa-bringup` | **DONE** | t230-native-aa-bringup-round4-results.md + 2 addenda; new unit **D-SAM** (Samsung SM-T230, replaces D-HP; called D-T230 in this thread's own files, quirks in TESTING-TEMPLATE.md 7a). 720p holds the link, 1080p EPIPEs every 5-6s. Both addenda answered in the app 2026-09-16. |
 | `native-aa-recovery-identity-and-speed` | **DONE** | native-aa-recovery-identity-and-speed-round4-results.md; round 4 PASS, PR-ready. Nothing queued. |
