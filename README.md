@@ -76,6 +76,7 @@ were reported under another filename, and are listed so the pairing rule does no
 
 - `zlink-aa-sink-decision-brief.md`, PC only, the descriptor decode and disassembly part two could not run; tools are in `tools/zbt/`
 - `audio-focus-round11-brief.md`
+- `launcher-auto-connect-crash-round2-brief.md`
 - `link-stall-periodic-scan-round4-brief.md` (2.4 GHz plus constrained memory; round 5 ran first and PASSed)
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
