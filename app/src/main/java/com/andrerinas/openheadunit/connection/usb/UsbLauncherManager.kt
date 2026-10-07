@@ -19,6 +19,8 @@ import com.andrerinas.openheadunit.connection.ConnectionStage
 import com.andrerinas.openheadunit.connection.ConnectionStageTracker
 import com.andrerinas.openheadunit.main.SettingsActivity
 import com.andrerinas.openheadunit.utils.AppLog
+import com.andrerinas.openheadunit.utils.ConnectionIssue
+import com.andrerinas.openheadunit.utils.ConnectionIssues
 import com.andrerinas.openheadunit.utils.ToastUtils
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.Dispatchers
@@ -180,6 +182,7 @@ class UsbLauncherManager(val service: AapService) {
             staleGaveUpOn = null
             staleSteps = 0
             staleLastStepAtMs = 0L
+            ConnectionIssues.clear(service, ConnectionIssue.STALE_USB_ACCESSORY)
             return
         }
         val usbManager = UsbDeviceCompat.usbManager(service) ?: return
@@ -191,6 +194,9 @@ class UsbLauncherManager(val service: AapService) {
         if (steps == 0 && staleGaveUpOn != null) {
             AppLog.i("UsbLauncher: the accessory that recovery gave up on has left the bus; recovery can run again")
             staleGaveUpOn = null
+            // The next plug-in starts a new episode; old step counts would give it up at once.
+            staleSteps = 0
+            staleLastStepAtMs = 0L
         }
         val step = StaleAccessoryRecoveryPolicy.decide(failure, device != null, cancelledByUser, steps)
         if (step == StaleAccessoryRecoveryPolicy.Step.GIVE_UP) staleGaveUpOn = device?.deviceName
@@ -204,8 +210,11 @@ class UsbLauncherManager(val service: AapService) {
                         "not a stale-accessory failure, no recovery")
                 }
             }
-            StaleAccessoryRecoveryPolicy.Step.GIVE_UP ->
+            StaleAccessoryRecoveryPolicy.Step.GIVE_UP -> {
                 AppLog.i("UsbLauncher: stale accessory $name: recovery used both steps; a replug is needed")
+                // The 3 s reconnect check fails here again and again; a moved stamp would defeat a dismissal.
+                ConnectionIssues.raiseOnce(service, ConnectionIssue.STALE_USB_ACCESSORY)
+            }
             else -> {
                 if (device == null) return
                 if (!beginAttempt(Tier.USB, "USB recovery of $name")) {
