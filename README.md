@@ -85,7 +85,6 @@ were reported under another filename, and are listed so the pairing rule does no
 - `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366`, two 20 min and two 15 min soaks)
 - `pr-1046-video-retirement-round2-brief.md` (candidate `b749525d`, re-pinned from `c04aa0e0`, A/B on D-HU with D-POCO; GLES screen-off returns and a reconnect; unattended after one hand step)
 - `pr-1047-session-reconnect-round2-brief.md` (candidate `dbf1e3a1` and combo tree `6e7426b0`; U1 and U2 grade the Save path and the held path apart; every Save is an operator tap; Stage N not run)
-- `launcher-auto-connect-crash-round3-brief.md` (candidate `bbec49fc`, one commit; D-HU and D-POCO; control APK from round 2; about 2 h 20 min, unattended)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -151,7 +150,7 @@ by `bssid-round1-results.md` and its addendum.
 | `fps-overlay-temp-and-cpu` | **CLOSED** | fps-overlay-temp-and-cpu-findings.md; PC + one read-only adb dump on D-HU, no round. Root cause found for both: temp EINVAL on 2/19 MT50 thermal zones nulls the whole scan (not per-zone isolated); app CPU% unnormalized against core count. Suggested follow-up (not queued): extract overlay to its own file, add left/right placement. |
 | `fps-overlay-compact` | **DONE** | Round 1 `10905b63` on D-HU with D-POCO: R0 to R5, U1, U2 all PASS; only chosen lines print, empty set draws nothing, own settings screen. Save and Discard taps not graded. `fps-overlay-compact-round1-results.md`. |
 | `self-mode-vpn-release` | Round 2 done, PASS | `self-mode-vpn-release-round2-results.md`. Candidate `2a91ee33`: R5P2 (5277 route) and R5L2 (legacy route) PASS, tun 0 at every read, P=12, 0 `Disconnected.`; R2M not run. Round 1: `self-mode-vpn-release-round1-results.md`. |
-| `launcher-auto-connect-crash` | Round 3 brief pushed on `bbec49fc` (one commit; the wake replay keeps its force). Round 2 on `e5f818b8`: R0, R6 PASS; R6B FAIL; R7 INCONCLUSIVE. | `launcher-auto-connect-crash-round3-brief.md`, `launcher-auto-connect-crash-round2-results.md`. |
+| `launcher-auto-connect-crash` | Round 3 on `bbec49fc`: R0, R8-PC, R6B, R6, R8 all PASS (R8 5/5, order bt_force, init_native, start_drop, already_init). PR-ready on the rig side. | `launcher-auto-connect-crash-round3-results.md`. |
 | `hp-slate-bringup` | **DONE** | hp-slate-bringup-round1-results.md; R0-R2 PASS, R3 FAIL with root cause found (FPS overlay hidden under TEXTURE view-mode by an addView-order bug in `AapProjectionActivity`, not device-specific). "Can't export logs" was a wrong retrieval path (`/storage/sdcard0/...`, not `/storage/emulated/0/...`) — export itself works. Fix not applied this round (scope). |
 | `t230-native-aa-bringup` | **DONE** | t230-native-aa-bringup-round4-results.md + 2 addenda; new unit **D-SAM** (Samsung SM-T230, replaces D-HP; called D-T230 in this thread's own files, quirks in TESTING-TEMPLATE.md 7a). 720p holds the link, 1080p EPIPEs every 5-6s. Both addenda answered in the app 2026-09-16. |
 | `native-aa-recovery-identity-and-speed` | **DONE** | native-aa-recovery-identity-and-speed-round4-results.md; round 4 PASS, PR-ready. Nothing queued. |
