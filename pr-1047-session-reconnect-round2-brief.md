@@ -10,7 +10,7 @@ Three APKs. Build each with `build_hur.sh` and copy it out of `apks/` the moment
 |---|---|---|---|
 | **B** (baseline) | `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | `run_unit_tests.sh`: 0 failures; record the count |
 | **C** (candidate) | the PR head, based directly on B | commit `c67b6d46a4576424bbe59c23773182abfd70bd7d` | 2766 JVM tests, 0 failures |
-| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `7839b50111dc07aa363daa8d07e01b67eaade4d4` | 0 failures; record the count |
+| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `9a4ade8efb6c901df1292552591b98a8a371eaae` | 0 failures; record the count |
 
 ```bash
 git fetch https://github.com/andreknieriem/open-headunit.git pull/1047/head pull/1046/head pull/1045/head
@@ -22,9 +22,9 @@ git merge-base HEAD 145a0c76                       # 145a0c762f0a87386ca63b54518
 # X: built locally, so nothing depends on a merge commit someone else made
 git checkout -B arm-X 145a0c762f0a87386ca63b54518ea5e861b290be
 git merge --no-edit 9b8f83664cc5081f3d023ac699c0b5fe757334c6    # PR 1045 head
-git merge --no-edit 4bb70c93b8ad334c37d03781579dc85f9ac83365    # PR 1046 head
+git merge --no-edit c04aa0e022864478f984c71af4ba16bb96067993    # PR 1046 head
 git merge --no-edit c67b6d46a4576424bbe59c23773182abfd70bd7d    # PR 1047 head (C)
-git rev-parse 'HEAD^{tree}'                        # MUST print 7839b50111dc07aa363daa8d07e01b67eaade4d4
+git rev-parse 'HEAD^{tree}'                        # MUST print 9a4ade8efb6c901df1292552591b98a8a371eaae
 ```
 
 C is the PR head as it is, rebased by its author onto `main` 145a0c76, so B and C differ by the PR's 18 commits and nothing else. Nothing on the transfer branch was rewritten since round 1.
@@ -736,7 +736,7 @@ Restore each unit's round backup of `settings.xml` (D-HU as root, `rig-quirks/un
 ```markdown
 # session-reconnect, round 2 results
 
-**Candidate C:** PR 1047 head @ c67b6d46a4576424bbe59c23773182abfd70bd7d   **Combo X tree:** <printed vs 7839b50111dc07aa363daa8d07e01b67eaade4d4, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
+**Candidate C:** PR 1047 head @ c67b6d46a4576424bbe59c23773182abfd70bd7d   **Combo X tree:** <printed vs 9a4ade8efb6c901df1292552591b98a8a371eaae, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
 **APK md5:** B <md5> / C <md5> / X <md5>
 **Units:** D-HU <API>, D-POCO <API, Gearhead>, D-MOTO <API, Gearhead>, D-SAM <API>, D-HP <API>
 **Date:** <yyyy-mm-dd>

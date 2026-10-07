@@ -41,21 +41,21 @@ A failed bring-up adds one re-run of that run. A host thermal wait adds up to 15
 
 | Arm | Where | SHA | Tree | Gate |
 |---|---|---|---|---|
-| Candidate C | `emotionbug/open-headunit`, branch `pr/split-video-retirement` | `4bb70c93b8ad334c37d03781579dc85f9ac83365` | `ff5714fbef8efb3f1be608ecb5e7f1f1ede779a5` | 2752 JVM tests, 0 failures |
+| Candidate C | `emotionbug/open-headunit`, branch `pr/split-video-retirement` | `c04aa0e022864478f984c71af4ba16bb96067993` | `4ddc69d9f917db7f6c0dac043c1cde9ca2f453c7` | 2752 JVM tests, 0 failures |
 | Baseline B | `andreknieriem/open-headunit` `main` | `145a0c762f0a87386ca63b54518ea5e861b290be` | `3b90bee727dc53e0200bc5cabb034d1a04b0be00` | report its count (2738 expected) |
 
-**History was rewritten.** Round 1 built `e7c2949c`, four commits on `7e9d813d`. The author then rebased onto `145a0c76` and force-pushed. The candidate is now six commits directly on the baseline, so the two arms differ by the branch alone.
+**History was rewritten.** Round 1 built `e7c2949c`, four commits on `7e9d813d`. The author then rebased onto `145a0c76` and force-pushed. The candidate is now seven commits directly on the baseline, so the two arms differ by the branch alone.
 
 **The baseline is not round 1's baseline.** `145a0c76` carries the projection-teardown-and-relays fix (merged as `1d9c0404`). Section 3 says what that changes for each run. No round 1 baseline number is a comparison in this round: every run builds a fresh baseline arm.
 
 ```bash
 git fetch https://github.com/andreknieriem/open-headunit.git main
 git fetch https://github.com/emotionbug/open-headunit.git pr/split-video-retirement
-git rev-parse FETCH_HEAD                                                        # must be 4bb70c93b8ad334c37d03781579dc85f9ac83365
-git rev-parse '4bb70c93b8ad334c37d03781579dc85f9ac83365^{tree}'                  # must be ff5714fbef8efb3f1be608ecb5e7f1f1ede779a5
+git rev-parse FETCH_HEAD                                                        # must be c04aa0e022864478f984c71af4ba16bb96067993
+git rev-parse 'c04aa0e022864478f984c71af4ba16bb96067993^{tree}'                  # must be 4ddc69d9f917db7f6c0dac043c1cde9ca2f453c7
 git rev-parse '145a0c762f0a87386ca63b54518ea5e861b290be^{tree}'                  # must be 3b90bee727dc53e0200bc5cabb034d1a04b0be00
-git merge-base 4bb70c93b8ad334c37d03781579dc85f9ac83365 145a0c762f0a87386ca63b54518ea5e861b290be   # must be 145a0c762f0a87386ca63b54518ea5e861b290be
-git log --oneline 145a0c762f0a87386ca63b54518ea5e861b290be..4bb70c93b8ad334c37d03781579dc85f9ac83365 | wc -l   # must be 6
+git merge-base c04aa0e022864478f984c71af4ba16bb96067993 145a0c762f0a87386ca63b54518ea5e861b290be   # must be 145a0c762f0a87386ca63b54518ea5e861b290be
+git log --oneline 145a0c762f0a87386ca63b54518ea5e861b290be..c04aa0e022864478f984c71af4ba16bb96067993 | wc -l   # must be 7
 ```
 
 **If a SHA, a tree or the merge-base differs, stop and ask.** The branch then carries code this brief did not check.
@@ -91,13 +91,13 @@ for a in cand.apk base.apk; do printf '%s ' $a
 
 **PASS:** all of these hold:
 
-- the trees and the merge-base match, and the commit count is 6;
+- the trees and the merge-base match, and the commit count is 7;
 - 2752 tests and 0 failures on the candidate, with `SurfaceRecoveryStateTest`, `VideoOutputEventsTest`, `VideoOutputRetirementTest` and `VideoSurfaceRetirementTest` present;
 - the two md5s differ;
 - in `cand.apk`, the first four strings count 1 or more and `detachCurrentSurface` counts 0;
 - in `base.apk`, the first four count 0 and `detachCurrentSurface` counts 1 or more.
 
-A build or test failure stops the round. After each install, send `ACTION_QUERY_STATE` and record the reply's `commit`: it begins `4bb70c93` on the candidate and `145a0c76` on the baseline.
+A build or test failure stops the round. After each install, send `ACTION_QUERY_STATE` and record the reply's `commit`: it begins `c04aa0e0` on the candidate and `145a0c76` on the baseline.
 
 ## 2. What this is and why it exists
 
@@ -114,13 +114,13 @@ On those returns the old candidate logged no focus-cycle line and 41 to 49 plain
 
 **The same root cause broke a reconnect.** The once-per-surface latch (`warmRelaunchCycleSpent`) was cleared only inside the skipped block. So a latch spent on a screen-off or cover return stayed spent into the next session. It then refused the new session's first-frame nudge, and the phone set up video and never streamed. `pr-1047-session-reconnect-round1-addendum-results.md` measured this 3 of 3 times on a combined build.
 
-**What the candidate does now** (`4bb70c93`; read from the code):
+**What the candidate does now** (`c04aa0e0`; read from the code):
 
 - **One detach method.** `VideoDecoder.detachSurfaceIfCurrent(surface, reason)` nulls `mSurface`, records `detachedSurface` and stops. A second detach of the same surface returns early. `ProjectionView.surfaceDestroyed` keeps main's order: detach first, then the callbacks.
 - **A stop counter.** `stop()` increments `surfaceStopGeneration` for `activity_stopped` and `screen_off_sleep`. `onStop` calls `stopIfCurrentSurface` on the activity's `ownedSurface` and keeps `mSurface`.
 - **The re-arm keys on that counter.** `SurfaceRecoveryState.onSurfaceChanged(targetChanged, stopGeneration)` returns true when the target changed or the generation moved since it last looked. That re-arms once per new generation: `settleFocusCycle()`, `armWarmRelaunch()` (which now only sets `lastSurfaceSetMs` and posts the 850 ms check) and the unsolicited gain at `TransportStarted`.
 - **The TEXTURE path from main stays.** `returnRearmRunnable` runs 300 ms after `onResume`. If no surface callback came since the resume, it consumes the generation through the same `onSurfaceChanged(false, ...)`, logs `AapProjectionActivity: returned to a kept surface with a stopped decoder; re-arming keyframe recovery`, re-arms, and sends one unsolicited gain. So a later same-surface callback for that stop cannot re-arm a second time.
-- **The latch resets at every session boundary.** A collector resets `SurfaceRecoveryState` on `Disconnected`, `Connecting` and `HandshakeComplete`, even while the activity is stopped.
+- **The latch resets at every session boundary.** A collector resets `SurfaceRecoveryState` on `Disconnected`, `Connecting` and `HandshakeComplete`, even while the activity is stopped. Since `c04aa0e0` the same collector also cancels a pending focus-cycle regain and zeroes the surface clock (`lastSurfaceSetMs`), so an old session's recovery cannot fire into the new one. The first-frame nudge V8 counts is gated by the latch, not by that clock, so V8's expectations do not change.
 - **The singleTask relaunch.** `recreateProjectionView` and the new `onDestroy` step detach only the activity's own `ownedSurface`. A late teardown from an old instance cannot stop the new instance's decoder.
 - **Output-thread logs.** They are queued and now dispatched even after their worker retires, with an explicit origin: `Throughput over` prints as `VideoDecoder.logThroughput | Throughput over ...`.
 - **Skips are logged.** `Decoder stop (<reason>) skipped: surface is no longer current`, `Decoder detach (<reason>) skipped: surface is no longer current`, and three `... skipped: activity has no owned surface` lines.
@@ -552,7 +552,7 @@ print(json.dumps({'capture': cap, 'phone_lines': len(rows), 'windows': out}, ind
 
 ## 6. The lines that decide every run
 
-Every app line below was checked with `git grep -F` against `app/src/main` at both `4bb70c93` and `145a0c76`. **All are present on both arms** except the four marked **candidate only**. Lines marked *(composed)* render from a format string; the runs grep the rendered form, and the block at the end lists the source fragment. The phone lines are Gearhead's and are not in this tree: projection-teardown-and-relays round 2 recorded `CAR.SERVICE: Car connection state changed: PREFLIGHT->CONNECTED` and the `Critical error` form on Gearhead 17.9. System lines come from the platform. Grep every capture with `grep -a`.
+Every app line below was checked with `git grep -F` against `app/src/main` at both `c04aa0e0` and `145a0c76`. **All are present on both arms** except the four marked **candidate only**. Lines marked *(composed)* render from a format string; the runs grep the rendered form, and the block at the end lists the source fragment. The phone lines are Gearhead's and are not in this tree: projection-teardown-and-relays round 2 recorded `CAR.SERVICE: Car connection state changed: PREFLIGHT->CONNECTED` and the `Critical error` form on Gearhead 17.9. System lines come from the platform. Grep every capture with `grep -a`.
 
 | Meaning | Line | Source | File and window |
 |---|---|---|---|
@@ -809,7 +809,7 @@ Results go in `pr-1046-video-retirement-round2-results.md` in the template's ske
 ```markdown
 # pr-1046-video-retirement, round 2 results
 
-**Candidate:** pr/split-video-retirement @ 4bb70c93b8ad334c37d03781579dc85f9ac83365       **Baseline:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
+**Candidate:** pr/split-video-retirement @ c04aa0e022864478f984c71af4ba16bb96067993       **Baseline:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
 **APK md5:** <candidate> / <baseline>
 **Unit:** D-HU (UNISOC MT50, Android 14) with D-POCO (Gearhead <version>)
 **Date:** <yyyy-mm-dd>
