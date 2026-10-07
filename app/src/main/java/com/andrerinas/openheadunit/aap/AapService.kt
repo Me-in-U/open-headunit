@@ -1057,6 +1057,7 @@ class AapService : Service() {
             emitSessionState(SessionStateIntent.STATE_FAILED, reason)
             projectingSinceMs = 0L
         }
+        commManager.onUsbHandshakeEnded = { usbLauncherManager.onUsbHandshakeEnded(it) }
         observeConnectionState()
         registerReceivers()
         carKeysManager.registerIdleReceivers(this)
@@ -1192,7 +1193,6 @@ class AapService : Service() {
                         cancelProjectionRaiseDeadline()
                         hasEverConnected = true
                         projectingSinceMs = SystemClock.elapsedRealtime()
-                        usbLauncherManager.projectionHandshakeFailures = 0
                         emitSessionState(SessionStateIntent.STATE_PROJECTING)
                         sendBroadcast(Intent(ACTION_REQUEST_NIGHT_MODE_UPDATE).apply {
                             setPackage(packageName)
@@ -1200,17 +1200,8 @@ class AapService : Service() {
                         maybeAutoResumePlaybackOnReconnect()
                     }
                     is CommManager.ConnectionState.Error -> {
-                        // Nothing may be counted here, and nothing new may be hung off this branch.
-                        // connectionState is a MutableStateFlow, so collection is conflated, and
-                        // startHandshake() calls disconnect() with no suspension point after
-                        // emitting Error — the value is already Disconnected by the time any
-                        // collector resumes, so this branch does not run while the Disconnected one
-                        // below runs normally. Anything that has to count failures counts them
-                        // where they happen; the silent-peer streak lives in CommManager for that
-                        // reason.
-                        if (state.message.contains("Handshake failed")) {
-                            usbLauncherManager.onHandshakeFailed()
-                        }
+                        // The flow is conflated and a synchronous disconnect() follows the emit, so
+                        // count failures where they happen (CommManager.onUsbHandshakeEnded).
                     }
                     is CommManager.ConnectionState.Disconnected -> {
                         if (hasEverConnected) {
@@ -1537,7 +1528,7 @@ class AapService : Service() {
             ConnectionStageTracker.notePhoneLeft(SystemClock.elapsedRealtime())
         }
         cancelAllBtAutoDisconnects()
-        usbLauncherManager.setSwitchingToProjection(false)
+        usbLauncherManager.onSessionEnded()
         releaseWifiLock()
         stopDummyVpn(DummyVpnPolicy.Reason.SESSION_ENDED)
 
