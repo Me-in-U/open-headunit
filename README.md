@@ -76,7 +76,6 @@ were reported under another filename, and are listed so the pairing rule does no
 
 - `zlink-aa-sink-decision-brief.md`, PC only, the descriptor decode and disassembly part two could not run; tools are in `tools/zbt/`
 - `audio-focus-round11-brief.md`
-- `launcher-auto-connect-crash-round2-brief.md`
 - `link-stall-periodic-scan-round4-brief.md` (2.4 GHz plus constrained memory; round 5 ran first and PASSed)
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
@@ -152,7 +151,7 @@ by `bssid-round1-results.md` and its addendum.
 | `fps-overlay-temp-and-cpu` | **CLOSED** | fps-overlay-temp-and-cpu-findings.md; PC + one read-only adb dump on D-HU, no round. Root cause found for both: temp EINVAL on 2/19 MT50 thermal zones nulls the whole scan (not per-zone isolated); app CPU% unnormalized against core count. Suggested follow-up (not queued): extract overlay to its own file, add left/right placement. |
 | `fps-overlay-compact` | **DONE** | Round 1 `10905b63` on D-HU with D-POCO: R0 to R5, U1, U2 all PASS; only chosen lines print, empty set draws nothing, own settings screen. Save and Discard taps not graded. `fps-overlay-compact-round1-results.md`. |
 | `self-mode-vpn-release` | Round 1 done, round 2 queued | `self-mode-vpn-release-round1-results.md`. Candidate `2a91ee33`: R4 (legacy release) PASS, R2 PASS, R3P/R3L PASS; R5P/R5L FAIL on `Disconnected.`=0 only, baseline R5A ends the same (drop lever). Round 2: `self-mode-vpn-release-round2-brief.md`. |
-| `launcher-auto-connect-crash` | R0, R6-PC, R6, R5-PC, R5 PASS on `0b8e7d59`; R6B FAIL (60 s no-join recreate fires in the dark). | `launcher-auto-connect-crash-round1-results.md`. Decide whether to hold `recoverNativeGroup` while the screen is off. |
+| `launcher-auto-connect-crash` | Round 2 on `e5f818b8`: R0, R6 PASS; R6B FAIL (no recreate line within 75 s, watchdog deferred); R7-PC, R7 INCONCLUSIVE (no double trigger reached). | `launcher-auto-connect-crash-round2-results.md`. Decide if a deferred watchdog fire counts for R6B. |
 | `hp-slate-bringup` | **DONE** | hp-slate-bringup-round1-results.md; R0-R2 PASS, R3 FAIL with root cause found (FPS overlay hidden under TEXTURE view-mode by an addView-order bug in `AapProjectionActivity`, not device-specific). "Can't export logs" was a wrong retrieval path (`/storage/sdcard0/...`, not `/storage/emulated/0/...`) — export itself works. Fix not applied this round (scope). |
 | `t230-native-aa-bringup` | **DONE** | t230-native-aa-bringup-round4-results.md + 2 addenda; new unit **D-SAM** (Samsung SM-T230, replaces D-HP; called D-T230 in this thread's own files, quirks in TESTING-TEMPLATE.md 7a). 720p holds the link, 1080p EPIPEs every 5-6s. Both addenda answered in the app 2026-09-16. |
 | `native-aa-recovery-identity-and-speed` | **DONE** | native-aa-recovery-identity-and-speed-round4-results.md; round 4 PASS, PR-ready. Nothing queued. |
