@@ -539,5 +539,3 @@ Nothing is settled. This is the thread's first round. The mechanism comes from a
 3. **U4 and N2**: does the list identity disable, over USB and over Native AA? Does a clean end restore it (P2 against P0)?
 4. **U2 and U3**: with the list identity, do `blank` and `skip` stop the disable (P1 against P0, and the two disable-line counts)?
 5. **N3, and U5 if it ran**: the policy at +5 s and +60 s after an unclean end.
-
-The decisive strings below are the app's own, one per line, for a mechanical `grep -F -r` against `app/src/main` on `fff96699`. Where a run greps a composed line, the block lists its fixed part: `Media Start Request ` (the runs grep `Media Start Request AUDIO:`) and `Bluetooth service announced with carAddress=` (followed by ` (bt-announce=real)` or ` (bt-announce=skip)`).
