@@ -182,6 +182,12 @@ class CommManager(
      * `disconnect()` follows the emit, so the value has moved on before any collector resumes.
      */
     var onSessionFailure: ((reason: String) -> Unit)? = null
+
+    /**
+     * Called after a USB handshake ends, [AapTransport.HandshakeFailure.NONE] on success, and after
+     * `disconnect()` on failure. The `Error` state never reaches a collector.
+     */
+    var onUsbHandshakeEnded: ((AapTransport.HandshakeFailure) -> Unit)? = null
     @Volatile private var _connection: ProjectionConnection? = null
 
     /**
@@ -564,8 +570,20 @@ class CommManager(
                 // unreachable by the time we came to report it.
                 val transport = _transport
                 val conn = _connection!!
+                val usb = conn is AbstractUsbProjectionConnection
                 val shook = transport?.startHandshake(conn) == true
-                if (_connection !== conn) return@withContext  // Preempted: a newer connect owns the state now.
+                val connectionNow = _connection
+                if (connectionNow !== conn) {
+                    // Our own failure teardown clears _connection before quit() returns; only a newer connection is a preemption.
+                    if (HandshakeEndReportPolicy.reportsAfterTeardown(
+                            usb, shook, connectionCleared = connectionNow == null, userExit = transport?.wasUserExit == true)
+                    ) {
+                        val failure = transport?.lastHandshakeFailure ?: AapTransport.HandshakeFailure.OTHER
+                        AppLog.i("CommManager: USB handshake failed ($failure) after its own teardown; reporting it to USB")
+                        onUsbHandshakeEnded?.invoke(failure)
+                    }
+                    return@withContext  // Preempted: a newer connect owns the state now.
+                }
                 if (shook) {
                     // A session that got this far had a working link to carry video on. See
                     // VideoStarvationPolicy for what it means when one ends without carrying any.
@@ -576,7 +594,9 @@ class CommManager(
                     ConnectionIssues.clear(context, ConnectionIssue.HEADUNIT_SERVER_NOT_ANSWERING)
                     settleSessionClaim(formed = true)
                     _connectionState.emit(ConnectionState.HandshakeComplete)
+                    if (usb) onUsbHandshakeEnded?.invoke(AapTransport.HandshakeFailure.NONE)
                 } else {
+                    val failure = transport?.lastHandshakeFailure ?: AapTransport.HandshakeFailure.OTHER
                     val silent = transport?.lastHandshakeFailure == AapTransport.HandshakeFailure.PEER_SILENT
                     noteHandshakeOutcome(silent)
                     // Here, not from a ConnectionState.Error collector: disconnect() follows with no
@@ -590,12 +610,14 @@ class CommManager(
                     settleSessionClaim(formed = false)
                     // Not a user exit: nobody chose to end a session that never formed.
                     disconnect(sendByeBye = false, isUserExit = false)
+                    if (usb) onUsbHandshakeEnded?.invoke(failure)
                 }
             } else {
                 onSessionFailure?.invoke("handshake_failed")
                 _connectionState.emit(ConnectionState.Error("Starting handshake without connection"))
             }
         } catch (e: Exception) {
+            val usb = _connection is AbstractUsbProjectionConnection
             // An exception is never the silent-peer case; clear the streak rather than leaving it
             // to age into a backoff that no longer describes what is happening.
             noteHandshakeOutcome(silent = false)
@@ -603,6 +625,7 @@ class CommManager(
             _connectionState.emit(ConnectionState.Error("Handshake failed: ${e.message}"))
             settleSessionClaim(formed = false)
             disconnect(sendByeBye = false, isUserExit = false)
+            if (usb) onUsbHandshakeEnded?.invoke(AapTransport.HandshakeFailure.OTHER)
         }
     }
 

@@ -128,6 +128,12 @@ class AapTransport(
          */
         PEER_SILENT,
 
+        /** A send or receive of the version exchange returned an error. */
+        TRANSPORT_ERROR,
+
+        /** The version response came back and the TLS handshake after it failed. */
+        SSL,
+
         OTHER
     }
 
@@ -1010,8 +1016,13 @@ class AapTransport(
                 while (SystemClock.elapsedRealtime() < recvDeadline) {
                     val remaining = (recvDeadline - SystemClock.elapsedRealtime())
                         .toInt().coerceAtLeast(100)
+                    val readStart = SystemClock.elapsedRealtime()
                     ret = connection.recvBlocking(buffer, buffer.size, remaining, false)
-                    if (ret < 0) transportError = true   // EOF or IOException, not a timeout
+                    val readMs = SystemClock.elapsedRealtime() - readStart
+                    if (HandshakeMessagePolicy.isReadError(ret, readMs, remaining,
+                            timeoutLooksLikeError = connection !is SocketProjectionConnection)) {
+                        transportError = true
+                    }
                     if (ret > 0) peerSentBytes = true
                     if (ret <= 0) break  // timeout or error — fall through to outer retry
                     if (ret >= 6
@@ -1051,8 +1062,8 @@ class AapTransport(
 
             if (!received) {
                 AppLog.e("Handshake: Version request/response failed after $attempt attempt(s). last ret: $ret")
-                if (!peerSentBytes && !transportError) {
-                    lastHandshakeFailure = HandshakeFailure.PEER_SILENT
+                lastHandshakeFailure = HandshakeMessagePolicy.versionFailure(peerSentBytes, transportError)
+                if (lastHandshakeFailure == HandshakeFailure.PEER_SILENT) {
                     AppLog.e(
                         "Handshake: the peer accepted the connection and then sent nothing at all. " +
                             "Our link is fine: every read timed out rather than failing. On the head " +
@@ -1065,6 +1076,7 @@ class AapTransport(
                 return false
             }
             AppLog.i("Handshake: Version response recv ret: %d", ret)
+            lastHandshakeFailure = HandshakeFailure.SSL
 
             AppLog.d("Handshake: Starting SSL handshake via performHandshake(). TS: ${SystemClock.elapsedRealtime()}")
             if (!ssl.performHandshake(connection)) {
