@@ -80,7 +80,6 @@ were reported under another filename, and are listed so the pairing rule does no
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
-- `pr-1066-byebye-priority-round1-brief.md` (USB stage needs an operator)
 - `pr-1067-tls-pump-round1-brief.md` (40 operator exits in the Android Auto UI)
 - `fps-overlay-compact-round1-brief.md` (D-HU with D-POCO; five Native AA sessions and nine settings dumps, about 1 h 15 min plus the build)
 - `launcher-auto-connect-crash-round1-brief.md` (D-HU as HOME with D-POCO; wireless bring-up must not wait for the screen)
@@ -122,7 +121,7 @@ by `bssid-round1-results.md` and its addendum.
 | `pr-1063-restart-audio` | Round 1 reported, FAIL on brief error | `pr-1063-restart-audio-round1-results.md`. M and B both FAIL only `sink >= 2` (sink line is 30 s, not 5 s); svc 1 on B, 0 on M as predicted; R3, R2-M PASS. |
 | `pr-1064-nearby-attempts` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1064-nearby-attempts-round1-results.md`. R0 PASS; N0 B 0/3 (Gearhead 17.9 refuses the helper launch), N1-N3 stopped; U1 B dongle never spent its budget, C not run. |
 | `pr-1065-reconnect-timers` | Round 1 reported, U1 INCONCLUSIVE | `pr-1065-reconnect-timers-round1-results.md`. C = `de1f9848` (same tree as brief). H 10/10 and N 5/5 match B; U1 all cycles masked by dongle re-enumeration; P INCONCLUSIVE (Gearhead 17.9 refuses helper). |
-| `pr-1066-byebye-priority` | Round 1 queued | `pr-1066-byebye-priority-round1-brief.md`. `145a0c76` vs main plus `73db22f6`. |
+| `pr-1066-byebye-priority` | Round 1 done, all six read FAIL on phone `crit` 0 only | `pr-1066-byebye-priority-round1-results.md`. ByeBye write SENT on 13 of 13 M exits, stop_to_quit 150 to 2-10 ms, phone receipt 12 of 13 (H-M-x5 none), no loss signature. Drop the `crit` 0 rule. |
 | `pr-1067-tls-pump` | Round 1 queued | `pr-1067-tls-pump-round1-brief.md`. `145a0c76` vs main plus `719b6963`. |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
 | `home-wifi-reconnect-mid-session` | Round 2 reported (D-SAM): R2 PASS (4 joins, 4 answered in 1.11 to 1.15 s), R5 INCONCLUSIVE (A-R2a session lost, restore not reached), R6 measured (7 link stalls joined vs 0 stood down) | `home-wifi-reconnect-mid-session-round2-results.md`, candidate `9676eee4`. |
