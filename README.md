@@ -84,6 +84,9 @@ were reported under another filename, and are listed so the pairing rule does no
 - `fps-overlay-compact-round1-brief.md` (D-HU with D-POCO; five Native AA sessions and nine settings dumps, about 1 h 15 min plus the build) + `fps-overlay-compact-round1-addendum.md` (new candidate SHA, same tree)
 - `launcher-auto-connect-crash-round1-brief.md` (D-HU as HOME with D-POCO; wireless bring-up must not wait for the screen)
 - `bluetooth-audio-disabled-usb-connect-round1-brief.md` (measurement; probe build, three announced Bluetooth addresses, phone A2DP policy)
+- `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366`, two 20 min and two 15 min soaks)
+- `pr-1046-video-retirement-round2-brief.md` (candidate `4bb70c93`, A/B on D-HU with D-POCO; GLES screen-off returns and a reconnect; unattended after one hand step)
+- `pr-1047-session-reconnect-round2-brief.md` (candidate `c67b6d46` and combo tree `7839b501`; every Save is an operator tap; Stage N not run)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -117,9 +120,9 @@ by `bssid-round1-results.md` and its addendum.
 |---|---|---|
 | `bluetooth-audio-disabled-usb-connect` | QUEUED | `bluetooth-audio-disabled-usb-connect-round1-brief.md`. Measurement on `fff96699`: does Android Auto disable the phone's A2DP for the announced address. |
 | `projection-teardown-and-relays` | **Round 3 DONE** | `projection-teardown-and-relays-round3-results.md`. R0, R4E-B, R4E-C, R4-C (3 IN_WINDOW: 1 adopt, 2 join, SSL 3/3), R4L-C all PASS on `a70ba7e2`; early-dial reset did not reproduce. R4L-C redial left no picture in 45 s (report-only). |
-| `pr-1045-framing` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
-| `pr-1046-video-retirement` | Round 1 reported, round FAIL | `pr-1046-video-retirement-round1-results.md`. `e7c2949c` vs `7e9d813d`. GLES screen-off returns lose the warm-relaunch escalation (B1 reproduced, H.264 no picture in 90 s, H.265 87 to 99 s); Home and launcher returns recreate the surface on both builds. TEXTURE rule FAIL, rest PASS, V1M UNTESTABLE. |
-| `pr-1047-session-reconnect` | Round 1 reported, round FAIL | `pr-1047-session-reconnect-round1-results.md`, addendum `-round1-addendum-results.md`. C3 x10 PASS; combo loses video after covers (before the save) and after the save; K alone and B fine. Stages B, N, C, D not run. |
+| `pr-1045-framing` | Round 2 queued; round 1 INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
+| `pr-1046-video-retirement` | Round 2 queued; round 1 FAIL | `pr-1046-video-retirement-round1-results.md`. `e7c2949c` vs `7e9d813d`. GLES screen-off returns lose the warm-relaunch escalation (B1 reproduced, H.264 no picture in 90 s, H.265 87 to 99 s); Home and launcher returns recreate the surface on both builds. TEXTURE rule FAIL, rest PASS, V1M UNTESTABLE. |
+| `pr-1047-session-reconnect` | Round 2 queued; round 1 FAIL | `pr-1047-session-reconnect-round1-results.md`, addendum `-round1-addendum-results.md`. C3 x10 PASS; combo loses video after covers (before the save) and after the save; K alone and B fine. Stages B, N, C, D not run. |
 | `pr-1063-restart-audio` | Round 1 reported, FAIL on brief error | `pr-1063-restart-audio-round1-results.md`. M and B both FAIL only `sink >= 2` (sink line is 30 s, not 5 s); svc 1 on B, 0 on M as predicted; R3, R2-M PASS. |
 | `pr-1064-nearby-attempts` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1064-nearby-attempts-round1-results.md`. R0 PASS; N0 B 0/3 (Gearhead 17.9 refuses the helper launch), N1-N3 stopped; U1 B dongle never spent its budget, C not run. |
 | `pr-1065-reconnect-timers` | Round 1 reported, U1 INCONCLUSIVE | `pr-1065-reconnect-timers-round1-results.md`. C = `de1f9848` (same tree as brief). H 10/10 and N 5/5 match B; U1 all cycles masked by dongle re-enumeration; P INCONCLUSIVE (Gearhead 17.9 refuses helper). |
