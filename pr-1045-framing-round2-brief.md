@@ -4,21 +4,26 @@
 
 | Arm | Where | SHA | Gate |
 |---|---|---|---|
-| Candidate C | `emotionbug/open-headunit`, branch `pr/split-aap-framing` (upstream PR head) | `9b8f83664cc5081f3d023ac699c0b5fe757334c6` (12 commits) | 2773 JVM tests, 0 failures |
-| Baseline B | `main` | `145a0c762f0a87386ca63b54518ea5e861b290be` | 2738 JVM tests, 0 failures |
+| Candidate C | B with the PR head `9b8f83664cc5081f3d023ac699c0b5fe757334c6` (12 commits) merged in, built locally | tree `11f0bfc99564ab41c0fce09b99f7c348daf66691` | 2855 JVM tests, 0 failures |
+| Baseline B | `main` (3.5.0-beta4) | commit `7102b4283666ffcc7802e49402735e3958cd51a0`, tree `e96aa72a2ff556c9d1a5733c07d69c1b183a1b61` | 2820 JVM tests, 0 failures |
 
-The candidate sits directly on the baseline (merge base `145a0c76`), so the two arms differ by the PR alone. History was rewritten since round 1: the author rebased the branch from `7e9d813d` onto `145a0c76` and force-pushed. `git range-diff` shows the first seven commits are patch-identical to the seven that round 1 tested at `dfb0d6f9`. Four commits are new.
+**Both arms are on today's `main`.** The PR branch sits on `145a0c76`; C is that branch merged onto B, so the two arms differ by the PR alone and both carry what `main` shipped since. The merge has no conflict. History was rewritten since round 1: the author rebased the branch from `7e9d813d` onto `145a0c76` and force-pushed. `git range-diff` shows the first seven commits are patch-identical to the seven that round 1 tested at `dfb0d6f9`. Four commits are new.
 
 ```bash
-git fetch https://github.com/emotionbug/open-headunit.git pr/split-aap-framing
-git checkout 9b8f83664cc5081f3d023ac699c0b5fe757334c6
-git log --oneline 145a0c76..HEAD | wc -l          # 11
-git merge-base HEAD 145a0c76                       # 145a0c762f0a87386ca63b54518ea5e861b290be
-# baseline, after the candidate APK is copied out
-git checkout 145a0c762f0a87386ca63b54518ea5e861b290be
+git fetch https://github.com/andreknieriem/open-headunit.git main pull/1045/head
+git cat-file -e 9b8f83664cc5081f3d023ac699c0b5fe757334c6 || echo "PR HEAD MISSING"
+git checkout -B arm-B 7102b4283666ffcc7802e49402735e3958cd51a0
+git rev-parse 'HEAD^{tree}'       # MUST print e96aa72a2ff556c9d1a5733c07d69c1b183a1b61
+# candidate, after the baseline APK is copied out
+git checkout -B arm-C 7102b4283666ffcc7802e49402735e3958cd51a0
+git merge --no-edit 9b8f83664cc5081f3d023ac699c0b5fe757334c6
+git rev-parse 'HEAD^{tree}'       # MUST print 11f0bfc99564ab41c0fce09b99f7c348daf66691
+git rev-parse --short HEAD         # the local merge commit; record it, ACTION_QUERY_STATE reports it
 ```
 
-Build each tree with `build_hur.sh` and `--max-workers=2` after the host cools to 70C. Copy each APK out of `apks/` into the round's folder the moment it is built, because the script deletes the previous one. Name them `base-145a0c76.apk` and `cand-9b8f8366.apk`. Record both md5s from a real `adb pull` plus a local `md5sum`.
+**If `PR HEAD MISSING` prints, the merge conflicts, or a tree differs, stop and report.** The PR then moved, and this brief did not check the new code. The merge commit stays local: do not push it. **B may be reused:** the main-smoke round 1 built `7102b428` as md5 `62ccbb85dfed879a1151dea9610df817` with 2820 tests. If that APK is still on disk with that md5, reuse it and say so in Setup notes.
+
+Build each tree with `build_hur.sh` and `--max-workers=2` after the host cools to 70C. Copy each APK out of `apks/` into the round's folder the moment it is built, because the script deletes the previous one. Name them `base-7102b428.apk` and `cand-9b8f8366-on-7102b428.apk`. Record both md5s from a real `adb pull` plus a local `md5sum`.
 
 **Identity is a DEX symbol plus the reported commit.** `onDroppedMediaData` exists only on the candidate: it came with `dced3994`, so it also separates this candidate from round 1's `dfb0d6f9`. `ident2` in §5 checks it on the pulled APK and prints the `commit` that `ACTION_QUERY_STATE` returns. Install with `adb install -r -d <named apk>` only. Read every settings key back after every install.
 
@@ -31,7 +36,7 @@ Build each tree with `build_hur.sh` and `--max-workers=2` after the host cools t
 | `6f707ce2` | yes | a discarded DATA run that a new FIRST replaces before its LAST still returns its credit, exactly once |
 | `9b8f8366` | yes | a valid fragmented DATA run that a new FIRST or COMPLETE abandons before its LAST also returns its credit, exactly once; healthy runs still ack in their handlers |
 
-The base also moved from `7e9d813d` to `145a0c76` (16 commits of `main`). None of them touches the reader, the reassembler, TLS or the audit. Both arms carry them, so round 1 numbers are context here, not a comparison.
+The base moved from round 1's `7e9d813d` to `7102b428` (3.5.0-beta4). None of the `main` commits in between touches the reader, the reassembler, TLS or the audit. Both arms carry them, so round 1 numbers are context here, not a comparison.
 
 ## 2. What this is and why
 
@@ -349,7 +354,7 @@ Both blocks were run on a synthetic capture before this brief was written. If ei
 
 ## 6. The lines that decide every run
 
-Each line was checked with `git grep -F` against the candidate tree at `9b8f8366` and, where the table says so, against the baseline at `145a0c76`. Format specifiers appear as in source.
+Each line was checked with `git grep -F` against the merged candidate tree `11f0bfc9` and, where the table says so, against the baseline at `7102b428`. Format specifiers appear as in source.
 
 ### 6a. New on the candidate (absent on the baseline)
 
@@ -425,10 +430,10 @@ Between runs, follow template §3a: `finish` ends the session; then `adb -s $HU 
 
 ### R0. Gate (both trees)
 
-1. Run `run_unit_tests.sh` on the candidate: **2773 tests, 0 failures**, counted from the JUnit XML. On the baseline: **2738, 0**. Any other count means the wrong tree; stop and say so.
+1. Run `run_unit_tests.sh` on the candidate: **2855 tests, 0 failures**, counted from the JUnit XML. On the baseline: **2820, 0**. Any other count means the wrong tree; stop and say so.
 2. On the candidate these tests exist and pass: `replacement FIRST retires dropped media DATA exactly once before delivery`, `budget discard returns DATA credit and replacement never inherits its identity`, `copied buffer growth preserves album art and ignores TLS backing capacity`, `empty TLS-only frames leave pending messages intact while empty LAST completes`, `video read cannot use the audio history slot or throttle a following audio report`.
 3. Build both APKs and copy them out. The two md5s differ.
-4. After each install: `ident2 cand` or `ident2 base` prints `IDENT-OK`. Quote the `commit` line (expected `9b8f8366...` on the candidate, `145a0c76...` on the baseline).
+4. After each install: `ident2 cand` or `ident2 base` prints `IDENT-OK`. Quote the `commit` line (expected the local merge commit on the candidate, `7102b428...` on the baseline).
 
 **PASS:** all four. **FAIL:** a red test, a wrong count, a wrong symbol. A build or test failure stops the round.
 
@@ -577,7 +582,7 @@ CR applies to every entry in `skipped_messages` of every `-C` run: A1, A2, I5 an
 
 **Cabling:** D-MOTO as the host on wireless adb, with its USB-C port free; D-POCO plugged into D-MOTO's port over OTG, on wireless adb (`adb tcpip 5555` as in round 1). Read template §7b first: two permission prompts per connect are structural; never tick "always"; read `dumpsys usb` on D-MOTO before the stage and quote it. D-POCO has a loose USB port (round 1); do not move the cable once the stage starts.
 
-**Before the stage:** install `base-145a0c76.apk` on D-MOTO with `adb -s $HU install -r -d`, run `ident2 base`, write the stage D keys and read them back. D-MOTO can be PIN-locked: check `adb -s $HU shell dumpsys window | grep -E 'isKeyguardShowing|mDreamingLockscreen'`; if `true`, the operator unlocks it once (hand step, reason: adb cannot pass a PIN). Quote D-POCO's Gearhead `versionName`. D-POCO's own Open Headunit stays stopped (`headunit://exit`, then force-stop, as in stage A step 1).
+**Before the stage:** install `base-7102b428.apk` on D-MOTO with `adb -s $HU install -r -d`, run `ident2 base`, write the stage D keys and read them back. D-MOTO can be PIN-locked: check `adb -s $HU shell dumpsys window | grep -E 'isKeyguardShowing|mDreamingLockscreen'`; if `true`, the operator unlocks it once (hand step, reason: adb cannot pass a PIN). Quote D-POCO's Gearhead `versionName`. D-POCO's own Open Headunit stays stopped (`headunit://exit`, then force-stop, as in stage A step 1).
 
 Every stage D run starts a second reader for the framework's USB lines (`usb_reader`, §5) beside the app capture. Stage D order: **P-U, U1-B, U2S-B**, then the candidate install, **U1-C, U2S-C**.
 
@@ -730,7 +735,7 @@ Name: `pr-1045-framing-round2-results.md`, following template §7. The bold verd
 ```markdown
 # pr-1045-framing, round 2 results
 
-**Candidate:** emotionbug/open-headunit pr/split-aap-framing @ 9b8f8366       **Baseline:** main @ 145a0c76
+**Candidate:** PR head 9b8f8366 merged onto main 7102b428, tree 11f0bfc9, merge commit <sha>       **Baseline:** main @ 7102b428
 **APK md5:** candidate <md5> / baseline <md5>
 **Unit:** D-HU (<chipset, API>) with D-POCO (<Gearhead versionName>); D-MOTO host with D-POCO device over OTG
 **Date:** <yyyy-mm-dd>

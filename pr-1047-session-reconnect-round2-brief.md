@@ -8,28 +8,29 @@ Three APKs. Build each with `build_hur.sh` and copy it out of `apks/` the moment
 
 | Arm | Code | Identity | Gate |
 |---|---|---|---|
-| **B** (baseline) | `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | `run_unit_tests.sh`: 0 failures; record the count |
-| **C** (candidate) | the PR head, based directly on B | commit `b62d86c29d005c7cedce81d65d48fd2649b8e4f6` | 2772 JVM tests, 0 failures |
-| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `f55db829d6aa7518a9a52ee33d51cc87d2cf323e` | 0 failures; record the count |
+| **B** (baseline) | `main` (3.5.0-beta4) | commit `7102b4283666ffcc7802e49402735e3958cd51a0`, tree `e96aa72a2ff556c9d1a5733c07d69c1b183a1b61` | 2820 JVM tests, 0 failures |
+| **C** (candidate) | B with the PR head `b62d86c29d005c7cedce81d65d48fd2649b8e4f6` (22 commits) merged in | tree `96857f5658ea587eebcc4b97791937542d2b3bc7` | 2854 JVM tests, 0 failures |
+| **X** (combo, optional) | B with the three PR heads merged in the order below | tree `f1f58d5538eaa50a51665f7ea62a1771b648ef12` | 2905 JVM tests, 0 failures |
 
 ```bash
-git fetch https://github.com/andreknieriem/open-headunit.git pull/1047/head pull/1046/head pull/1045/head
+git fetch https://github.com/andreknieriem/open-headunit.git main pull/1047/head pull/1046/head pull/1045/head
 git cat-file -e b62d86c29d005c7cedce81d65d48fd2649b8e4f6 || echo "C MISSING"
-git checkout -B arm-B 145a0c762f0a87386ca63b54518ea5e861b290be
-git checkout -B arm-C b62d86c29d005c7cedce81d65d48fd2649b8e4f6
-git log --oneline 145a0c76..HEAD | wc -l          # 22
-git merge-base HEAD 145a0c76                       # 145a0c762f0a87386ca63b54518ea5e861b290be
+git checkout -B arm-B 7102b4283666ffcc7802e49402735e3958cd51a0
+git rev-parse 'HEAD^{tree}'                        # MUST print e96aa72a2ff556c9d1a5733c07d69c1b183a1b61
+git checkout -B arm-C 7102b4283666ffcc7802e49402735e3958cd51a0
+git merge --no-edit b62d86c29d005c7cedce81d65d48fd2649b8e4f6    # PR 1047 head
+git rev-parse 'HEAD^{tree}'                        # MUST print 96857f5658ea587eebcc4b97791937542d2b3bc7
 # X: built locally, so nothing depends on a merge commit someone else made
-git checkout -B arm-X 145a0c762f0a87386ca63b54518ea5e861b290be
+git checkout -B arm-X 7102b4283666ffcc7802e49402735e3958cd51a0
 git merge --no-edit 9b8f83664cc5081f3d023ac699c0b5fe757334c6    # PR 1045 head
 git merge --no-edit b749525d8c4b05cfcbb2a631afb727c344731e5d    # PR 1046 head
 git merge --no-edit b62d86c29d005c7cedce81d65d48fd2649b8e4f6    # PR 1047 head (C)
-git rev-parse 'HEAD^{tree}'                        # MUST print f55db829d6aa7518a9a52ee33d51cc87d2cf323e
+git rev-parse 'HEAD^{tree}'                        # MUST print f1f58d5538eaa50a51665f7ea62a1771b648ef12
 ```
 
-C is the PR head as it is, rebased by its author onto `main` 145a0c76, so B and C differ by the PR's 22 commits and nothing else. Nothing on the transfer branch was rewritten since round 1.
+**Both arms are on today's `main`.** The PR's 22 commits sit on `145a0c76`; C is the PR head merged onto B with no conflict, so B and C differ by the PR and nothing else. Nothing on the transfer branch was rewritten since round 1.
 
-**If `C MISSING` prints, stop the round and escalate:** the PR head moved. **If X's tree differs, or a merge conflicts, or X fails its unit tests, do not build X.** Every X run is then UNTESTABLE; record what printed and carry on with B and C. The merge commits stay local: do not push them.
+**If `C MISSING` prints, C's merge conflicts, or C's tree differs, stop the round and escalate:** the PR head moved. **If X's tree differs, or a merge conflicts, or X fails its unit tests, do not build X.** Every X run is then UNTESTABLE; record what printed and carry on with B and C. The merge commits stay local: do not push them. **B may be reused:** the main-smoke round 1 built `7102b428` as md5 `62ccbb85dfed879a1151dea9610df817` with 2820 tests. If that APK is still on disk with that md5, reuse it and say so in Setup notes.
 
 ### 1a. Identity gate, per arm, before any run on that arm
 
@@ -44,7 +45,7 @@ unzip -p installed.apk 'classes*.dex' | strings | grep -cF '<symbol>'
 | `AapMessageReassembler` (PR 1045) | 0 | 0 | 1 or more |
 | `outputPublicationLock` (PR 1046) | 0 | 0 | 1 or more |
 
-The source trees agree: `SettingsRestartRecovery` is in 0 files on B and 4 on C and X; `AapMessageReassembler` is in 0 on B and C and 4 on X; `outputPublicationLock` is in 0 on B and C and 1 on X. Also send `ACTION_QUERY_STATE` and record `commit`: B's must start `145a0c76`, C's `b62d86c2`; X's is the local merge commit (record it). Record every APK md5 from a real `adb pull` plus a local `md5sum`. The three must differ.
+The source trees agree: `SettingsRestartRecovery` is in 0 files on B and 4 on C and X; `AapMessageReassembler` is in 0 on B and C and 4 on X; `outputPublicationLock` is in 0 on B and C and 1 on X. Also send `ACTION_QUERY_STATE` and record `commit`: B's must start `7102b428`; C's and X's are local merge commits (record them). Record every APK md5 from a real `adb pull` plus a local `md5sum`. The three must differ.
 
 ## 2. What this is and why it exists
 
@@ -189,7 +190,7 @@ D2KEYS="int:wifi-connection-mode=1 int:log-level=2 int:onboarding-version=2 bool
 
 ## 5. The lines that decide the runs
 
-Each unit line was checked with `grep -F` against `app/src/main` (and `contract/src` for the reason) of B (`145a0c76`), C (`b62d86c2`) and the X tree. Every one prints at INFO, so `log-level=2` carries all of them. `AapService: session state <state> (<reason>)` is composed at run time; the reasons are constants in `HeadUnitIntent.kt`.
+Each unit line was checked with `grep -F` against `app/src/main` (and `contract/src` for the reason) of B (`7102b428`), the merged C tree (`96857f56`) and the X tree. Every one prints at INFO, so `log-level=2` carries all of them. `AapService: session state <state> (<reason>)` is composed at run time; the reasons are constants in `HeadUnitIntent.kt`.
 
 | Line (fixed substring) | File | Meaning | B | C, X |
 |---|---|---|---|---|
@@ -753,7 +754,7 @@ Restore each unit's round backup of `settings.xml` (D-HU as root, `rig-quirks/un
 ```markdown
 # session-reconnect, round 2 results
 
-**Candidate C:** PR 1047 head @ b62d86c29d005c7cedce81d65d48fd2649b8e4f6   **Combo X tree:** <printed vs f55db829d6aa7518a9a52ee33d51cc87d2cf323e, or not built>   **Baseline B:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
+**Candidate C:** PR 1047 head b62d86c2 merged onto main 7102b428, tree <printed vs 96857f5658ea587eebcc4b97791937542d2b3bc7>   **Combo X tree:** <printed vs f1f58d5538eaa50a51665f7ea62a1771b648ef12, or not built>   **Baseline B:** main @ 7102b4283666ffcc7802e49402735e3958cd51a0
 **APK md5:** B <md5> / C <md5> / X <md5>
 **Units:** D-HU <API>, D-POCO <API, Gearhead>, D-MOTO <API, Gearhead>, D-SAM <API>, D-HP <API>
 **Date:** <yyyy-mm-dd>

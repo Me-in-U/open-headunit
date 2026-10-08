@@ -41,24 +41,25 @@ A failed bring-up adds one re-run of that run. A host thermal wait adds up to 15
 
 | Arm | Where | SHA | Tree | Gate |
 |---|---|---|---|---|
-| Candidate C | `emotionbug/open-headunit`, branch `pr/split-video-retirement` | `b749525d8c4b05cfcbb2a631afb727c344731e5d` | `06d25b5b4cd109a253936e73209d7eb70f4a3ced` | 2754 JVM tests, 0 failures |
-| Baseline B | `andreknieriem/open-headunit` `main` | `145a0c762f0a87386ca63b54518ea5e861b290be` | `3b90bee727dc53e0200bc5cabb034d1a04b0be00` | report its count (2738 expected) |
+| Candidate C | B with the PR head `b749525d8c4b05cfcbb2a631afb727c344731e5d` (9 commits) merged in, built locally | the local merge commit | `b0efa0bdacfc749c4c9adb0c5a48c4c3737c667c` | 2836 JVM tests, 0 failures |
+| Baseline B | `andreknieriem/open-headunit` `main` (3.5.0-beta4) | `7102b4283666ffcc7802e49402735e3958cd51a0` | `e96aa72a2ff556c9d1a5733c07d69c1b183a1b61` | 2820 JVM tests, 0 failures |
 
-**History was rewritten.** Round 1 built `e7c2949c`, four commits on `7e9d813d`. The author then rebased onto `145a0c76` and force-pushed. The candidate is now nine commits directly on the baseline, so the two arms differ by the branch alone.
+**History was rewritten.** Round 1 built `e7c2949c`, four commits on `7e9d813d`. The author then rebased onto `145a0c76` and force-pushed. The branch is nine commits on `145a0c76`. **Both arms are on today's `main`:** C is the branch merged onto B with no conflict, so the two arms differ by the branch alone.
 
-**The baseline is not round 1's baseline.** `145a0c76` carries the projection-teardown-and-relays fix (merged as `1d9c0404`). Section 3 says what that changes for each run. No round 1 baseline number is a comparison in this round: every run builds a fresh baseline arm.
+**The baseline is not round 1's baseline.** `7102b428` carries the projection-teardown-and-relays fix (merged as `1d9c0404`), and since `bbec49fc` it holds every automatic wireless bring-up while the screen is off. A live session is not affected; a session that ends during a screen-off return is re-armed when the screen comes on. Section 3 says what that changes for each run. No round 1 baseline number is a comparison in this round: every run builds a fresh baseline arm.
 
 ```bash
-git fetch https://github.com/andreknieriem/open-headunit.git main
-git fetch https://github.com/emotionbug/open-headunit.git pr/split-video-retirement
-git rev-parse FETCH_HEAD                                                        # must be b749525d8c4b05cfcbb2a631afb727c344731e5d
-git rev-parse 'b749525d8c4b05cfcbb2a631afb727c344731e5d^{tree}'                  # must be 06d25b5b4cd109a253936e73209d7eb70f4a3ced
-git rev-parse '145a0c762f0a87386ca63b54518ea5e861b290be^{tree}'                  # must be 3b90bee727dc53e0200bc5cabb034d1a04b0be00
-git merge-base b749525d8c4b05cfcbb2a631afb727c344731e5d 145a0c762f0a87386ca63b54518ea5e861b290be   # must be 145a0c762f0a87386ca63b54518ea5e861b290be
-git log --oneline 145a0c762f0a87386ca63b54518ea5e861b290be..b749525d8c4b05cfcbb2a631afb727c344731e5d | wc -l   # must be 9
+git fetch https://github.com/andreknieriem/open-headunit.git main pull/1046/head
+git cat-file -e b749525d8c4b05cfcbb2a631afb727c344731e5d || echo "PR HEAD MISSING"
+git checkout -B arm-B 7102b4283666ffcc7802e49402735e3958cd51a0
+git rev-parse 'HEAD^{tree}'                    # must be e96aa72a2ff556c9d1a5733c07d69c1b183a1b61
+git checkout -B arm-C 7102b4283666ffcc7802e49402735e3958cd51a0
+git merge --no-edit b749525d8c4b05cfcbb2a631afb727c344731e5d
+git rev-parse 'HEAD^{tree}'                    # must be b0efa0bdacfc749c4c9adb0c5a48c4c3737c667c
+git rev-parse --short HEAD                      # the local merge commit; record it
 ```
 
-**If a SHA, a tree or the merge-base differs, stop and ask.** The branch then carries code this brief did not check.
+**If the PR head is missing, the merge conflicts or a tree differs, stop and ask.** Do not push the merge commit. **B may be reused:** the main-smoke round 1 built `7102b428` as md5 `62ccbb85dfed879a1151dea9610df817` with 2820 tests. If that APK is still on disk with that md5, reuse it and say so in Setup notes. The branch then carries code this brief did not check.
 
 Build each arm from a detached worktree at its SHA, the way projection-teardown-and-relays round 3 did:
 
@@ -97,7 +98,7 @@ for a in cand.apk base.apk; do printf '%s ' $a
 - in `cand.apk`, the first four strings count 1 or more and `detachCurrentSurface` counts 0;
 - in `base.apk`, the first four count 0 and `detachCurrentSurface` counts 1 or more.
 
-A build or test failure stops the round. After each install, send `ACTION_QUERY_STATE` and record the reply's `commit`: it begins `b749525d` on the candidate and `145a0c76` on the baseline.
+A build or test failure stops the round. After each install, send `ACTION_QUERY_STATE` and record the reply's `commit`: it is the local merge commit on the candidate and begins `7102b428` on the baseline.
 
 ## 2. What this is and why it exists
 
@@ -554,7 +555,7 @@ print(json.dumps({'capture': cap, 'phone_lines': len(rows), 'windows': out}, ind
 
 ## 6. The lines that decide every run
 
-Every app line below was checked with `git grep -F` against `app/src/main` at both `b749525d` and `145a0c76`. **All are present on both arms** except the four marked **candidate only**. Lines marked *(composed)* render from a format string; the runs grep the rendered form, and the block at the end lists the source fragment. The phone lines are Gearhead's and are not in this tree: projection-teardown-and-relays round 2 recorded `CAR.SERVICE: Car connection state changed: PREFLIGHT->CONNECTED` and the `Critical error` form on Gearhead 17.9. System lines come from the platform. Grep every capture with `grep -a`.
+Every app line below was checked with `git grep -F` against `app/src/main` at both the merged candidate tree `b0efa0bd` and `7102b428`. **All are present on both arms** except the four marked **candidate only**. Lines marked *(composed)* render from a format string; the runs grep the rendered form, and the block at the end lists the source fragment. The phone lines are Gearhead's and are not in this tree: projection-teardown-and-relays round 2 recorded `CAR.SERVICE: Car connection state changed: PREFLIGHT->CONNECTED` and the `Critical error` form on Gearhead 17.9. System lines come from the platform. Grep every capture with `grep -a`.
 
 | Meaning | Line | Source | File and window |
 |---|---|---|---|
@@ -811,7 +812,7 @@ Results go in `pr-1046-video-retirement-round2-results.md` in the template's ske
 ```markdown
 # pr-1046-video-retirement, round 2 results
 
-**Candidate:** pr/split-video-retirement @ b749525d8c4b05cfcbb2a631afb727c344731e5d       **Baseline:** main @ 145a0c762f0a87386ca63b54518ea5e861b290be
+**Candidate:** PR head b749525d merged onto main 7102b428, tree b0efa0bd, merge commit <sha>       **Baseline:** main @ 7102b4283666ffcc7802e49402735e3958cd51a0
 **APK md5:** <candidate> / <baseline>
 **Unit:** D-HU (UNISOC MT50, Android 14) with D-POCO (Gearhead <version>)
 **Date:** <yyyy-mm-dd>

@@ -10,20 +10,23 @@ Two APKs. Build each with `build_hur_cool.sh` (or `build_hur.sh` under the therm
 
 | Arm | Code | Identity | Gate |
 |---|---|---|---|
-| **B** (baseline) | upstream `main` | commit `145a0c762f0a87386ca63b54518ea5e861b290be` | JVM tests 2738, 0 failures |
-| **C** (candidate) | the contributor's branch `codex/tls-post-handshake` at `7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0`: eight commits directly on `main` 145a0c76, no merge | tree `a01a121b4e017eb0d0865557fdcb960c9c82fc54` | JVM tests 2745, 0 failures; `TlsApplicationPumpTest`, `AapTlsWriterTest`, `AapSslSessionTest`, `TlsEmptyTailReaderTest`, `TlsVideoAccountingTest` and `PeerCloseReasonTest`, `ApplicationSendReadinessTest` and `MicrophoneWriteFailureTest` present and passing |
+| **B** (baseline) | upstream `main` (3.5.0-beta4) | commit `7102b4283666ffcc7802e49402735e3958cd51a0`, tree `e96aa72a2ff556c9d1a5733c07d69c1b183a1b61` | JVM tests 2820, 0 failures |
+| **C** (candidate) | B with the PR head `7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0` (eight commits on `145a0c76`) merged in, built locally | tree `9a77cc00a41e65d1b4fb9c69bb740c211b798de9` | JVM tests 2827, 0 failures; `TlsApplicationPumpTest`, `AapTlsWriterTest`, `AapSslSessionTest`, `TlsEmptyTailReaderTest`, `TlsVideoAccountingTest`, `PeerCloseReasonTest`, `ApplicationSendReadinessTest` and `MicrophoneWriteFailureTest` present and passing |
 
 ```bash
-git fetch https://github.com/andreknieriem/open-headunit.git main
-git fetch https://github.com/emotionbug/open-headunit.git codex/tls-post-handshake
-git checkout -B arm-1067-B 145a0c762f0a87386ca63b54518ea5e861b290be
-git checkout -B arm-1067-C 7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0
-git rev-parse 'HEAD^{tree}'        # MUST print a01a121b4e017eb0d0865557fdcb960c9c82fc54
+git fetch https://github.com/andreknieriem/open-headunit.git main pull/1067/head
+git cat-file -e 7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0 || echo "PR HEAD MISSING"
+git checkout -B arm-1067-B 7102b4283666ffcc7802e49402735e3958cd51a0
+git rev-parse 'HEAD^{tree}'        # MUST print e96aa72a2ff556c9d1a5733c07d69c1b183a1b61
+git checkout -B arm-1067-C 7102b4283666ffcc7802e49402735e3958cd51a0
+git merge --no-edit 7e7cbf53814a5bdbc9436f17c5a2f501d148c6e0
+git rev-parse 'HEAD^{tree}'        # MUST print 9a77cc00a41e65d1b4fb9c69bb740c211b798de9
+git rev-parse --short HEAD          # the local merge commit; record it
 ```
 
-**If the branch head is not `7e7cbf53`, stop and report the new head.** The contributor rebases often. If the new head's tree is `a01a121b...`, build it and say so. Any other tree needs a new brief.
+**If `PR HEAD MISSING` prints, the merge conflicts, or a tree differs, stop and report the PR's new head.** The contributor rebases often; a new head needs a new brief. **Both arms are on today's `main`:** C is the PR merged onto B, so the arms differ by the PR alone. Do not push the merge commit.
 
-**B may be reused.** The pr-1063, pr-1065 and pr-1066 rounds built `145a0c76` as md5 `3100817484e47e9a6418753308e92ed1` with 2738 tests. If that APK is still on disk with that md5, reuse it and do not rebuild. Say which in Setup notes.
+**B may be reused.** The main-smoke round 1 built `7102b428` as md5 `62ccbb85dfed879a1151dea9610df817` with 2820 tests. If that APK is still on disk with that md5, reuse it and do not rebuild. Say which in Setup notes.
 
 The eight test classes above must not exist on B. A build or test failure stops the round.
 
@@ -33,7 +36,7 @@ The eight test classes above must not exist on B. A build or test failure stops 
 unzip -p $OUT/live.apk 'classes*.dex' | strings | grep -cF 'encrypted write failed or incomplete'     # B: 0, C: 1 or more
 ```
 
-Also `send ACTION_QUERY_STATE` and record `commit` (B starts `145a0c76`, C starts `7e7cbf53`). A mismatch voids that arm's runs: reinstall once, then mark them UNTESTABLE.
+Also `send ACTION_QUERY_STATE` and record `commit` (B starts `7102b428`; C is the local merge commit). A mismatch voids that arm's runs: reinstall once, then mark them UNTESTABLE.
 
 ## 2. What this is and why
 
@@ -344,7 +347,7 @@ main()
 
 ## 5. The deciding lines
 
-Head unit lines, checked with `git grep -F` against the B tree (`145a0c76`) and the C tree (`a01a121b`). "Composed" means the source builds the printed text from a format; the printed form is what the extractor greps.
+Head unit lines, checked with `git grep -F` against the B tree (`7102b428`) and the merged C tree (`9a77cc00`). "Composed" means the source builds the printed text from a format; the printed form is what the extractor greps.
 
 | Line | Source | Level | B | C | Used for |
 |---|---|---|---|---|---|
@@ -391,7 +394,7 @@ Between runs: `close_run` ends the run; restore the backup with `$PUT`; write on
 2. Both APKs built (or B reused) and copied out; two different md5s.
 3. After each install: the identity check in section 1 prints the expected count, and `ACTION_QUERY_STATE` returns the expected `commit`.
 
-**PASS:** all three. A build or test failure, or a tree other than `a01a121b...`, stops the round.
+**PASS:** all three. A build or test failure, or a tree other than `9a77cc00...`, stops the round.
 
 ### XW-B and XW-C. Ten phone exits per arm (**the point of the round**)
 
