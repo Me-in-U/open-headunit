@@ -5,9 +5,9 @@
 | Arm | Ref | SHA | Get it |
 |---|---|---|---|
 | A (baseline) | `main` | `f749b84c` | `git fetch fork && git checkout f749b84c` |
-| B (candidate) | `fix/floating-button-touch` | `32e04da1` | `git fetch fork && git checkout 32e04da1` |
+| B (candidate) | `fix/settings-defaults` | `32e04da1` | `git fetch fork && git checkout 32e04da1` |
 
-The candidate is four commits on top of A: `9ccadb7f` (floating button), `b83c34e5` (Exit default), `db6c8079` (old Bluetooth address), `32e04da1` (Save rule). This brief was first pushed as `floating-button-touch-round1-brief.md` naming `9ccadb7f` only; it now covers the whole branch. No run of the old brief took place.
+The candidate is four commits on top of A: `9ccadb7f` (floating button), `b83c34e5` (Exit default), `db6c8079` (old Bluetooth address), `32e04da1` (Save rule). The branch was `fix/floating-button-touch` until this round and this brief was first pushed as `floating-button-touch-round1-brief.md` naming `9ccadb7f` only; it now covers the whole branch. No run of the old brief took place.
 
 **Build gate (R0).** Build both with `build_hur.sh` and copy each APK out of `apks/` as soon as it is built (`build_hur.sh` deletes the previous APK). Then run `run_unit_tests.sh` on B.
 
