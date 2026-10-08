@@ -23,7 +23,7 @@ Every one of these was measured across `t230-native-aa-bringup` rounds 1 to 4.
 - **Video no longer needs capping by hand, as of the 2026-09-16 build.** At 1080p the phone used to
   complete the handshake, open every channel and break the TCP session with `EPIPE` about 3.5 s
   later, repeating every 5 to 6 s and never rendering a frame; 60 fps was fine, so resolution was the
-  binding constraint. `audio-sink-jitter-round4-results.md` N5 measured the app's own cap firing
+  binding constraint. `archive/rounds/audio-sink-jitter-round4-results.md` N5 measured the app's own cap firing
   unasked on every session including a 40 minute one, with no `EPIPE` anywhere. Read
   `[RES_CAP] ... linkCapped=` and leave `resolutionId` alone. On a build older than that, cap it.
 - **The P2P group name is random every session.** `wifi-direct-stable-identity` has no code path

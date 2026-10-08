@@ -10,7 +10,7 @@ Read for every round: adb and shell traps, build and install, settings.xml, mark
   - Write the results file after every run, so a shutdown loses one run.
   - If the host stays hot after 30 min, stop the round and mark the rest UNTESTABLE (host thermal).
 
-  `th_gate`, `th_watch` and `th_report` in `projection-teardown-and-relays-round1-brief.md` (`ptr_lib.sh`) implement this, and fall back to sysfs when `rig_thermal.sh` is absent. Copy them into any new brief.
+  `th_gate`, `th_watch` and `th_report` in `archive/rounds/projection-teardown-and-relays-round1-brief.md` (`ptr_lib.sh`) implement this, and fall back to sysfs when `rig_thermal.sh` is absent. Copy them into any new brief.
 - **A heard fault can be stamped into the capture.** `ACTION_LOG_MARKER --es text <label>` prints
   `AutomationMarker: <label>` at WARN, so a tester listening to a run can put the moment they heard
   something into the log beside the instruments. `-f 0x00000020` is required, as for every automation

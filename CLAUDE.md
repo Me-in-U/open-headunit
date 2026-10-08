@@ -101,8 +101,8 @@ Five rules the table implies.
    re-run once, and a second mismatch is graded from the host's own greps and noted in Setup notes.
 4. **Execution agents run in the foreground, one runner at a time.** A background agent died
    silently mid-round and left the rig unsupervised for about 68 minutes
-   (`audio-focus-round10-results.md`, Setup notes), and two concurrent runs of one script corrupted
-   a cycle (`native-aa-dsam-wifi-unavailable-round2-results.md`, Setup notes). So: no background
+   (`archive/rounds/audio-focus-round10-results.md`, Setup notes), and two concurrent runs of one script corrupted
+   a cycle (`archive/rounds/native-aa-dsam-wifi-unavailable-round2-results.md`, Setup notes). So: no background
    agent ever drives a device, and every script run takes the rig lock, which fails fast instead of
    racing a second terminal:
 
@@ -229,7 +229,7 @@ per-hit table is evidence under the verdict, not a replacement for it: `## R<id>
 verdict alone on its line, then the table. A round-level verdict, when the brief asks for one, is
 its own `## Round verdict: <VERDICT>` line. Tools that read results files (and the evals that
 check the Haiku-to-Sonnet split) find verdicts by those two shapes only;
-`native-aa-dsam-wifi-unavailable-round2-results.md` stated its FAIL only in a sentence under a
+`archive/rounds/native-aa-dsam-wifi-unavailable-round2-results.md` stated its FAIL only in a sentence under a
 table, and nothing but a person can read that.
 
 Evidence goes in `evidence/<topic>-round<N>/`. A photo-heavy round also gets a sibling
