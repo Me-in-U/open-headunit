@@ -86,6 +86,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366` merged onto main `7102b428`, two 20 min and two 15 min soaks)
 - `pr-1047-session-reconnect-round2-brief.md` (candidate `b62d86c2` merged onto main `7102b428`, combo tree `f1f58d55`; U1 and U2 grade the Save path and the held path apart; every Save is an operator tap; Stage N not run)
 - `usb-reattach-round1-brief.md` (candidate `37bbe71e` on main `7102b428`, A/B with baseline; D-POCO with D-MOTO over USB, then the dongle; stale-accessory recovery ladder and its guards)
+- `pr-1001-devserver-p2p-round1-brief.md` (B `0cbff004`, P `7f5bc6e9` = `fork/review/pr-1001`, F `ce5e61cb` = `fork/review/pr-1001-loopback-fix`; stage 1 D-POCO as head unit in Self Mode, stage 2 D-HU with D-POCO; R3 is the point; hand steps HS1 to HS4; renames D-HU's WiFi Direct device to OpenHU)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -131,6 +132,7 @@ by `bssid-round1-results.md` and its addendum.
 | `pr-1065-reconnect-timers` | Round 1 reported, U1 INCONCLUSIVE | `pr-1065-reconnect-timers-round1-results.md`. C = `de1f9848` (same tree as brief). H 10/10 and N 5/5 match B; U1 all cycles masked by dongle re-enumeration; P INCONCLUSIVE (Gearhead 17.9 refuses helper). |
 | `pr-1066-byebye-priority` | Round 1 done, all six read FAIL on phone `crit` 0 only | `pr-1066-byebye-priority-round1-results.md`. ByeBye write SENT on 13 of 13 M exits, stop_to_quit 150 to 2-10 ms, phone receipt 12 of 13 (H-M-x5 none), no loss signature. Drop the `crit` 0 rule. |
 | `pr-1067-tls-pump` | Round 2 queued; round 1 never run | `pr-1067-tls-pump-round2-brief.md`. `7102b428` vs `7e7cbf53` merged onto it. Round 1 brief (6 h, three stages) is superseded: do not run it. |
+| `pr-1001-devserver-p2p` | Round 1 queued | `pr-1001-devserver-p2p-round1-brief.md`. Automatic WiFi Direct for Headunit Server mode. R3: a Self Mode session must survive station WiFi off beside an armed WiFi Direct launcher (B and F keep it, P is expected to close it). |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
 | `home-wifi-reconnect-mid-session` | Round 2 reported (D-SAM): R2 PASS (4 joins, 4 answered in 1.11 to 1.15 s), R5 INCONCLUSIVE (A-R2a session lost, restore not reached), R6 measured (7 link stalls joined vs 0 stood down) | `home-wifi-reconnect-mid-session-round2-results.md`, candidate `9676eee4`. |
 | `rig-sdlc` | **DONE, adopted** | `rig-sdlc/README.md`: `/rig-round`, host-driven (no workflow on the rig), Haiku `rig-executor` in the foreground; install steps inside. |
