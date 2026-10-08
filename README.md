@@ -121,7 +121,7 @@ by `bssid-round1-results.md` and its addendum.
 | Thread | State | Next |
 |---|---|---|
 | `call-audio-route` | Round 1 queued | `call-audio-route-round1-brief.md`. Measures whether Motorcycle plus head unit microphone off moves a phone call's audio, with and without an intercom on the phone, and where the assistant opens SCO. No candidate. |
-| `settings-defaults` | Round 2 queued | `settings-defaults-round2-brief.md`. `59f34df2`: an Exit in Android Auto now ends the session as a user exit (round 1 E2 FAIL: the flag was read after the transport was dropped). Reruns E2 twice, adds E4 (a dropped phone still recovers), and R1 at 90% opacity. Round 1: `settings-defaults-round1-results.md`. |
+| `settings-defaults` | Round 2 queued | `settings-defaults-round2-brief.md`. `77c0b1fe`: an Exit in Android Auto now ends the session as a user exit (round 1 E2 FAIL: the flag was read after the transport was dropped), and 5% opacity is clickable again. Reruns E2 twice, adds E4 (a dropped phone still recovers), R3b (5% opens the app) and R1 at 90% opacity. Round 1: `settings-defaults-round1-results.md`. |
 | `usb-reattach` | Round 1 queued | `usb-reattach-round1-brief.md`. `37bbe71e`: a failed USB handshake now reaches the stale-accessory recovery (AOA re-switch, then USB reset). |
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |

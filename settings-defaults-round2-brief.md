@@ -5,15 +5,15 @@
 | Arm | Ref | SHA | Get it |
 |---|---|---|---|
 | A (baseline) | `main` | `f749b84c` | reuse the round 1 APK (md5 `17715974a26b7b6c5651c82eab02b383`); if you no longer have it, `git fetch fork && git checkout f749b84c` and rebuild |
-| C (candidate) | `fix/settings-defaults` | `59f34df2` | `git fetch fork && git checkout 59f34df2` |
+| C (candidate) | `fix/settings-defaults` | `77c0b1fe` | `git fetch fork && git checkout 77c0b1fe` |
 
-C is round 1's B (`9e32cf47`) plus one commit, `59f34df2`. History was not rewritten: `9ccadb7f` and `9e32cf47` are unchanged.
+C is round 1's B (`9e32cf47`) plus two commits: `59f34df2` (the Exit fix) and `77c0b1fe` (any visible opacity stays clickable). History was not rewritten: `9ccadb7f` and `9e32cf47` are unchanged. This brief first named `59f34df2`; if you already built that, rebuild at `77c0b1fe`.
 
 **Build gate (R0).** Build C with `build_hur.sh` and copy the APK out of `apks/` at once. Run `run_unit_tests.sh` on C.
 
-- PASS: 2836 tests and 0 failures, counted from the JUnit XML. The count is the same as round 1, because `59f34df2` adds no test.
+- PASS: 2836 tests and 0 failures, counted from the JUnit XML. The count is the same as round 1: `59f34df2` adds no test, and `77c0b1fe` changes `FloatingButtonOpacityPolicyTest` (still 9) without adding one.
 - PASS: C's md5 differs from round 1's B (`285526785255eb362bd61968e89ba847`) and from A.
-- PASS: `unzip -p <C.apk> 'classes*.dex' | strings | grep -c '^59f34df2'` is 1 or more. This is the `GIT_SHA` build field. Also `grep -c 'dirty'` on the same output: if it is 1 or more, the build had local changes; stop and report.
+- PASS: `unzip -p <C.apk> 'classes*.dex' | strings | grep -c '^77c0b1fe'` is 1 or more. This is the `GIT_SHA` build field. Also `grep -c 'dirty'` on the same output: if it is 1 or more, the build had local changes; stop and report.
 - A build or test failure stops the round.
 
 Install with `adb install -r <named apk>` only. Run `apk_check` before every run.
@@ -28,6 +28,10 @@ The cause is in `CommManager`. The Exit path sets `wasUserExit` on the transport
 
 A phone that leaves on its own still sets no flag, so that path is unchanged. E4 checks this, because a wrong flag there would hold the stack down after every dropped link.
 
+### The 5% rule (`77c0b1fe`)
+
+Round 1's B made the button untouchable below 10%. The slider moves in steps of 5, so that affected 0% and 5%. `77c0b1fe` goes back to the merged PR's rule: only 0% hides the button and lets taps through. At 5% the button is faint but clickable, with an opaque window and the opacity on the view, as at every other visible value. A tap that lands on our own button is not subject to Android 12's pass-through rule, so this needs no window alpha. Round 1's R3 (5% passes through) no longer describes C; R3b replaces it.
+
 ### R1 from round 1
 
 R1 needed a window with `NOT_TOUCHABLE` and **no** `alpha=` token. A's window read `alpha=0.8` with the "Opacity" setting at 80. A's code never sets the window alpha (`LayoutParams.alpha`); it sets only the view alpha. So the 0.8 came from somewhere else. There are two explanations, and R1b separates them:
@@ -39,7 +43,8 @@ Neither is measured. Both outcomes are useful, so R1b has no FAIL for the build;
 
 ## 3. What is different this round
 
-- **The point of the round is E2b.** R1b is second.
+- **The point of the round is E2b.** R3b and R1b follow.
+- **R3b's tap is injected**, under the operator's standing rule, as round 1's R4 was. It aims at our own button, so the pass-through question does not arise.
 - **Exit taps are injected**, as in round 1's E runs, under the operator's standing rule (at most 5 injected taps per run). The coordinates are round 1's Setup note 11. Check them with `uiautomator dump` or a screenshot before E2b. If they moved, use the new ones and say so in Setup notes.
 - **R1b and R2b need a real hand tap.** An injected tap does not pass through `/dev/input`, and we do not know whether Android checks it against the overlay in the same way. The operator taps the **visible Wi-Fi row** of the OEM settings app, not the button, after the executor prints the ready line. The recorder is armed before that line. If the operator cannot tap, R1b and R2b are UNTESTABLE. Do not replace the hand tap with `input tap`.
 - **R2b runs only if R1b reproduces the defect** (shape 1 in §7). Otherwise skip it.
@@ -120,7 +125,7 @@ grade_drop() { local s; s=$(seg "$1" "$2")
 
 ## 6. The deciding lines
 
-Every app line was checked with `grep -F` against `59f34df2`. The framework lines are patterns from round 1.
+Every app line was checked with `grep -F` against `77c0b1fe`. The framework lines are patterns from round 1.
 
 | What | Line or pattern | Where | Level |
 |---|---|---|---|
@@ -138,6 +143,9 @@ Every app line was checked with `grep -F` against `59f34df2`. The framework line
 | Phone side active | `[/ ](GH\|CAR)\.` | phone capture | framework |
 | Tap reached Settings | `START u0 .*cmp=com.android.settings/` | HU capture, tap window | framework |
 | Tap dropped | `untrusted touch`, case-insensitive | HU capture, tap window | framework |
+| Tap reached the button | `START u0 .*cmp=com.andrerinas.headunitrevived/com.andrerinas.openheadunit.main.MainActivity` | HU capture, tap window | framework |
+| Button shown | `FloatingButtonService: Added floating button overlay` | HU capture | INFO |
+| Button removed | `FloatingButtonService: Removed floating button overlay` | HU capture | INFO |
 | Window alpha | the `alpha=` token on the `mAttrs` line (`lpalpha`) | `$RUN.<label>.overlay.txt` | n/a |
 
 `log-level` 2 (INFO) carries every app line above.
@@ -177,6 +185,15 @@ This guards the path `59f34df2` must not change.
 - If `state_other` = 0 and `state_user_exit` = 0, the session had not ended within 30 s: the run is INCONCLUSIVE. Report the last `Throughput over` time.
 - If no session forms after `E4-back` but every row of the drop window passed, the run is INCONCLUSIVE, not a FAIL. Report `toggle=` and the last `NativeAA:` line.
 
+### R3b: 5% is clickable (C, D-HU)
+
+Keys: round 1's R3 keys (status mode `true`, disconnected opacity **`5`**, opacity 80, x-percent 50, y-percent 23). Steps: `bring_up`; `front` must name the OEM settings app; `win R3b`; read the window alpha with `lpalpha` on `R3b.R3b.overlay.txt`; `shot R3b`; `mark R3b-tap-ready`; `adb -s $HU shell input tap 720 204`; `sleep 3`; `mark R3b-tap-done`; `grade_tap tap` (it reads exactly these two markers).
+
+- Setup: `Added floating button overlay` ≥ 1, the flags do **not** contain `NOT_TOUCHABLE`, and `lpalpha` shows no alpha (1.0).
+- **PASS:** `ohu_start` ≥ 1, `settings_start` = 0, `untrusted` = 0, and `Removed floating button overlay` ≥ 1 after `R3b-tap-ready`.
+- **FAIL:** `settings_start` ≥ 1 (the tap passed through, which is round 1's B behaviour), or the flags contain `NOT_TOUCHABLE`.
+- If the change did nothing, the window reads `NOT_TOUCHABLE` with `alpha=0.05`, as round 1's R3 measured. The flag line alone separates the two.
+
 ### R1b: the defect on the merged build above 80% (A, D-HU)
 
 Keys: §4 (opacity **90**). Steps: `bring_up`; `front` must name the OEM settings app; `win R1b`; read the window alpha with your round 1 `lpalpha` helper on `R1b.R1b.overlay.txt`; then `hand_tap tap` with the operator tapping the Wi-Fi row at `TAPX`=720, `TAPY`=204; `grade_tap tap`.
@@ -204,10 +221,11 @@ R1b's keys and steps on C.
 
 ## 8. Do not re-run
 
-R0's B gate, R2 to R6, E1, E3 and S0 to S2 passed in round 1, and `59f34df2` touches none of their code. The C0 calibration stands (x-percent 50, y-percent 23, tap point 720,204).
+R0's B gate, R2, R4 to R6, E1, E3 and S0 to S2 passed in round 1, and C changes none of their code paths (R2 is 0%, where both rules agree). R3 is superseded by R3b, not re-run. The C0 calibration stands (x-percent 50, y-percent 23, tap point 720,204).
 
 ## 9. Report back
 
 1. E2b and E2b-2: `state_user_exit`, `user_exit` and `accepted_after`. Together they say whether the Exit now ends the session as a user exit.
 2. E4: `state_user_exit` and whether a session formed after `E4-back`. Together they say whether a dropped link still recovers.
-3. R1b: the shape, with the `lpalpha` value.
+3. R3b: `ohu_start`, `settings_start` and the window flags, which say whether 5% is now clickable.
+4. R1b: the shape, with the `lpalpha` value.
