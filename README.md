@@ -120,7 +120,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
-| `settings-defaults` | Round 1 reported | `settings-defaults-round1-results.md`. `9e32cf47`: no FAIL except E2 (Exit disconnects but ends as link_lost and the phone returns in 1 s, no user_exit line); R1 INCONCLUSIVE (A already has window alpha 0.8); R2 to R6, E1, S0 to S2 PASS; E3 address INCONCLUSIVE. |
+| `settings-defaults` | Round 2 queued | `settings-defaults-round2-brief.md`. `59f34df2`: an Exit in Android Auto now ends the session as a user exit (round 1 E2 FAIL: the flag was read after the transport was dropped). Reruns E2 twice, adds E4 (a dropped phone still recovers), and R1 at 90% opacity. Round 1: `settings-defaults-round1-results.md`. |
 | `usb-reattach` | Round 1 queued | `usb-reattach-round1-brief.md`. `37bbe71e`: a failed USB handshake now reaches the stale-accessory recovery (AOA re-switch, then USB reset). |
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |
