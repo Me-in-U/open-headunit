@@ -81,6 +81,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
+- `pr-1076-text-keycodes-round1-brief.md` (D-HU with D-POCO, A/B; R1 is the point)
 - `pr-1067-tls-pump-round2-brief.md` (candidate `7e7cbf53` merged onto main `7102b428`, which fixes the ByeBye blocker; A/B on D-HU with D-POCO; 20 operator exits and two 15 min soaks, about 1.5 h; replaces round 1)
 - `update-direct-apk-link-round1-brief.md` (candidate `4ebe61bc` with a local test version name; D-SAM and D-HP with Firefox 68, D-HU as control; no phone; hand taps for the update dialog)
 - `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366` merged onto main `7102b428`, two 20 min and two 15 min soaks)
@@ -133,6 +134,7 @@ by `bssid-round1-results.md` and its addendum.
 | `pr-1066-byebye-priority` | Round 1 done, all six read FAIL on phone `crit` 0 only | `pr-1066-byebye-priority-round1-results.md`. ByeBye write SENT on 13 of 13 M exits, stop_to_quit 150 to 2-10 ms, phone receipt 12 of 13 (H-M-x5 none), no loss signature. Drop the `crit` 0 rule. |
 | `pr-1067-tls-pump` | Round 2 queued; round 1 never run | `pr-1067-tls-pump-round2-brief.md`. `7102b428` vs `7e7cbf53` merged onto it. Round 1 brief (6 h, three stages) is superseded: do not run it. |
 | `pr-1001-devserver-p2p` | Round 1 queued | `pr-1001-devserver-p2p-round1-brief.md`. Automatic WiFi Direct for Headunit Server mode. R3: a Self Mode session must survive station WiFi off beside an armed WiFi Direct launcher (B and F keep it, P is expected to close it). |
+| `pr-1076-text-keycodes` | Round 1 queued | `pr-1076-text-keycodes-round1-brief.md`. Letter keycodes advertised to the phone. R1: does a Maps search open the head unit or phone keyboard, B vs M; R2 typed keys; R3 a typed 'n' with a night key mapped. |
 | `external-bt-module-coldstart` | **ROUND 1 DONE** | `external-bt-module-coldstart-round1-results.md`, `4335f0f8`: G2, G4, G3a-e PASS; G1 INCONCLUSIVE (headless session never runs the exit path). Next: G1 needs a projecting session. |
 | `home-wifi-reconnect-mid-session` | Round 2 reported (D-SAM): R2 PASS (4 joins, 4 answered in 1.11 to 1.15 s), R5 INCONCLUSIVE (A-R2a session lost, restore not reached), R6 measured (7 link stalls joined vs 0 stood down) | `home-wifi-reconnect-mid-session-round2-results.md`, candidate `9676eee4`. |
 | `rig-sdlc` | **DONE, adopted** | `rig-sdlc/README.md`: `/rig-round`, host-driven (no workflow on the rig), Haiku `rig-executor` in the foreground; install steps inside. |
