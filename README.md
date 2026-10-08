@@ -85,6 +85,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `update-direct-apk-link-round1-brief.md` (candidate `4ebe61bc` with a local test version name; D-SAM and D-HP with Firefox 68, D-HU as control; no phone; hand taps for the update dialog)
 - `pr-1045-framing-round2-brief.md` (D-HU with D-POCO over Native AA, then USB with D-MOTO as host; candidate `9b8f8366` merged onto main `7102b428`, two 20 min and two 15 min soaks)
 - `pr-1047-session-reconnect-round2-brief.md` (candidate `b62d86c2` merged onto main `7102b428`, combo tree `f1f58d55`; U1 and U2 grade the Save path and the held path apart; every Save is an operator tap; Stage N not run)
+- `usb-reattach-round1-brief.md` (candidate `37bbe71e` on main `7102b428`, A/B with baseline; D-POCO with D-MOTO over USB, then the dongle; stale-accessory recovery ladder and its guards)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -117,6 +118,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
+| `usb-reattach` | Round 1 queued | `usb-reattach-round1-brief.md`. `37bbe71e`: a failed USB handshake now reaches the stale-accessory recovery (AOA re-switch, then USB reset). |
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |
 | `bluetooth-audio-disabled-usb-connect` | ROUND 4 BRIEFED | `bluetooth-audio-disabled-usb-connect-round4-brief.md` queued, same SHA `fff96699`, measures the greyed switch and `bt-announce=skip`. Round 3: `bluetooth-audio-disabled-usb-connect-round3-results.md`, SHA `fff96699`. U5a PASS (5 of 5 pulls RESTORED), N0p/N4a/N4b PASS. Harness verb count is one short; N4a2 void (operator touch), N4a2x re-run. |
