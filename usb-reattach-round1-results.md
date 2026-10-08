@@ -114,4 +114,4 @@ Pre-registered by the brief; not run.
 - **Recovery time.** About 17.9 s in the common path (a failed version exchange of about 7.7 s, a 5.6 s wait, a 4.6 s retry), against 0.6 s for a hand replug. See the timing table.
 - **Give-up and banner:** never reached, so the `STALE_USB_ACCESSORY` banner, its stamp and the bound on the same plug-in are untested on hardware.
 - **Operator's manual "USB controlled by" step** (setup note 1) is a precondition of every hand recovery on this rig and was not in any brief.
-- Evidence for this stage will be uploaded with the Stage D addendum as release `rig-evidence-usb-reattach`, asset `usb-reattach-round1-captures.zip`.
+- Evidence: release `rig-evidence-usb-reattach`, asset `usb-reattach-round1-captures.zip` (29538728 bytes), sha256 `263ac55e36e3d1e2f09dadb0f023cab00ec7608ad36d3cdc6b9f3102bf32478a`. It holds both stages. The APKs are not in the zip; their md5s are in the header.

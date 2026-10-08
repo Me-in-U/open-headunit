@@ -29,4 +29,4 @@ The dongle plugged once and left in; D-MOTO's WiFi was turned off for 20 s under
 
 - Stage D shows the guards hold in the cases the brief names: no ladder step against the dongle in 11 sessions (6 plugs and 5 re-enumerations) and no failed handshake at all.
 - D-POCO's battery limits long OTG sessions: it lost about 1% per 4 minutes of dongle hosting from 19%. A future round with many dongle plugs should start D-POCO charged.
-- Evidence for Stage U and Stage D together: release `rig-evidence-usb-reattach`, asset `usb-reattach-round1-captures.zip` (not yet uploaded at the time of writing; the results file names the release).
+- Evidence for Stage U and Stage D together: release `rig-evidence-usb-reattach`, asset `usb-reattach-round1-captures.zip` (29538728 bytes), sha256 `263ac55e36e3d1e2f09dadb0f023cab00ec7608ad36d3cdc6b9f3102bf32478a`. It holds both stages. The APKs are not in the zip; their md5s are in the header.
