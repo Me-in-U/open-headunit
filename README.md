@@ -88,6 +88,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `pr-1047-session-reconnect-round2-brief.md` (candidate `b62d86c2` merged onto main `7102b428`, combo tree `f1f58d55`; U1 and U2 grade the Save path and the held path apart; every Save is an operator tap; Stage N not run)
 - `usb-reattach-round1-brief.md` (candidate `37bbe71e` on main `7102b428`, A/B with baseline; D-POCO with D-MOTO over USB, then the dongle; stale-accessory recovery ladder and its guards)
 - `pr-1001-devserver-p2p-round1-brief.md` (B `0cbff004`, P `7f5bc6e9` = `fork/review/pr-1001`, F `ce5e61cb` = `fork/review/pr-1001-loopback-fix`; stage 1 D-POCO as head unit in Self Mode, stage 2 D-HU with D-POCO; R3 is the point; hand steps HS1 to HS4; renames D-HU's WiFi Direct device to OpenHU)
+- `floating-button-touch-round1-brief.md` (A `f749b84c` = main, B `9ccadb7f`; D-HU for R1 to R4 and R6 with D-POCO, D-SAM for R5; every tap is an operator hand step; R1 and R2 are the point)
 
 Superseded, do not run: `hands-free-wake-and-proto-schema-round1-brief.md` is reported and is
 replaced by `hands-free-wake-round2-brief.md`; its proto, serve-path and control runs are DONE and
@@ -120,6 +121,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
+| `floating-button-touch` | Round 1 queued | `floating-button-touch-round1-brief.md`. `9ccadb7f`: below 10% the floating button lets taps through, with the opacity on the window so Android 12+ does not drop them. |
 | `usb-reattach` | Round 1 queued | `usb-reattach-round1-brief.md`. `37bbe71e`: a failed USB handshake now reaches the stale-accessory recovery (AOA re-switch, then USB reset). |
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |
