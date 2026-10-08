@@ -1,19 +1,19 @@
-# floating-button-touch: round 1 brief
+# settings-defaults: round 1 brief
 
 ## 1. Build and baseline
 
 | Arm | Ref | SHA | Get it |
 |---|---|---|---|
 | A (baseline) | `main` | `f749b84c` | `git fetch fork && git checkout f749b84c` |
-| B (candidate) | `fix/floating-button-touch` | `9ccadb7f` | `git fetch fork && git checkout 9ccadb7f` |
+| B (candidate) | `fix/floating-button-touch` | `32e04da1` | `git fetch fork && git checkout 32e04da1` |
 
-The candidate is a new branch with one commit on top of A. No history was rewritten.
+The candidate is four commits on top of A: `9ccadb7f` (floating button), `b83c34e5` (Exit default), `db6c8079` (old Bluetooth address), `32e04da1` (Save rule). This brief was first pushed as `floating-button-touch-round1-brief.md` naming `9ccadb7f` only; it now covers the whole branch. No run of the old brief took place.
 
 **Build gate (R0).** Build both with `build_hur.sh` and copy each APK out of `apks/` as soon as it is built (`build_hur.sh` deletes the previous APK). Then run `run_unit_tests.sh` on B.
 
-- PASS: B has 2835 tests and 0 failures, counted from the JUnit XML, including `FloatingButtonOpacityPolicyTest` (9) and `FloatingButtonPolicyTest` (5).
+- PASS: B has 2836 tests and 0 failures, counted from the JUnit XML, including `FloatingButtonOpacityPolicyTest` (9), `FloatingButtonPolicyTest` (5), `AaExitActionPolicyTest` (4) and `BluetoothAddressSeedPolicyTest` (4).
 - PASS: the two APK md5s differ.
-- PASS: `unzip -p <B.apk> 'classes*.dex' | strings | grep -cF windowAlpha` is 1 or more, and the same grep on A's APK is 0. `windowAlpha` is a method that B adds and A does not have.
+- PASS: `unzip -p <B.apk> 'classes*.dex' | strings | grep -cF windowAlpha` is 1 or more, and the same grep on A's APK is 0. `windowAlpha` is a method that B adds and A does not have. Also run `unzip -p <apk> 'classes*.dex' | strings | grep -cF 40:EF:4C:A3:CB:A5`: B is 1 or more and A is 0, because only B carries the old address as a constant.
 - A build or test failure stops the round.
 
 Install with `adb install -r <named apk>` only, and check the md5 of the live APK before every run (`apk_check` below).
@@ -29,6 +29,18 @@ The candidate does two things:
 - Below a 10% floor the button is not touchable, so 5% also lets taps through. Before, only exactly 0% did.
 - Below the floor the opacity goes on the window (`LayoutParams.alpha`) and the view stays at 1.0. At or above the floor nothing changes: window alpha 1.0, view alpha animated.
 
+### The Exit default (`b83c34e5`)
+
+When the user taps Exit in the Android Auto app drawer, the phone sends a video focus request with mode `VIDEO_FOCUS_NATIVE`. Up to 3.3.1 the head unit ended the session on it. PR #954 (in A) added the setting "Android Auto Exit Action" with **Return to OEM Launcher (Minimize)** as the default, so on A the projection goes to the home screen and the session stays up. B makes **Disconnect Session** the default again. A stored value is kept: a user with `aa-exit-action` = `0` on disk still minimizes. There is no migration.
+
+### The Save rule (`32e04da1`)
+
+Each settings screen loads every value into a pending field. On A, Save writes every one of them back, so one changed row puts every default on disk (a "frozen default"). B writes only the values that differ from what is stored. Prediction from the code, **not measured**: on A one Save adds many keys; on B it adds only the changed one.
+
+### The old Bluetooth address (`db6c8079`)
+
+Up to v.1.14.2 the `bt-address` default was `40:EF:4C:A3:CB:A5`, one developer's own address, and a Save kept it on disk. B reads that value as empty, so `AapService.onCreate` fills in the detected address.
+
 ## 3. What is different this round
 
 - **The tap is a hand step, by the operator's choice.** No verb can tap another app, and `input tap` is excluded for this round. The executor arms a touch recorder (`getevent`) and asks the operator to tap once at a given point. The executor waits until the recorder sees the touch. The verdict is graded from the logs, never from what the operator saw.
@@ -36,6 +48,10 @@ The candidate does two things:
 - **The floating button is off by default.** Every run turns it on in `settings.xml`.
 - **The button only shows while Open Headunit is in the background.** Each run launches `MainActivity`, then opens Settings over it. That backgrounds the app and starts `FloatingButtonService`.
 - **R1 expects the defect.** Its PASS means "the defect reproduced". If D-HU's `block_untrusted_touches` is not `2` (or null, which means 2), R1 is INCONCLUSIVE, not a FAIL.
+- **The Exit tap is a hand step.** It is a tap into the projected video, which §3 allows, but the Exit tile moves between Android Auto versions, so the operator finds and taps it. The executor waits until the head unit logs the focus request.
+- **S1 and S2 change a setting in the app's UI on purpose.** The Save button is the control under test and no verb reaches it, so the operator flips one switch and taps Save. Every other setting in the round still goes through `settings.xml`.
+- **S1 expects the defect** (A writes the untouched keys). If S1 writes none of them, S2's PASS proves nothing; mark S2 INCONCLUSIVE.
+- **Back up `settings.xml` before C0** with `pdump round-start` and restore it after S2. The S runs delete keys.
 - **A is never run on D-SAM.** API 19 has no untrusted-touch blocking, so A and B are expected to behave the same there.
 
 ## 4. Settings keys
@@ -65,12 +81,24 @@ adb -s $HU shell settings get global block_untrusted_touches   # record it; null
 
 `ACTION_LOG_MARKER` is not gated on either build, so `allow-external-configuration` is not needed.
 
+The E and S runs add these. "delete" means the template's §1 delete half only, so the key reads as its default.
+
+| Run | Key | Type | Value |
+|---|---|---|---|
+| E1, E2 | `aa-exit-action` | int | delete |
+| E3 | `aa-exit-action` | int | `0` |
+| E3 | `bt-address` | string | `40:EF:4C:A3:CB:A5` |
+| S0, S1, S2 | `hud_mirroring`, `hide-clock`, `hide-battery-level`, `fps-limit`, `aa-exit-action`, `show-toast-messages` | | delete all six |
+| E1 to E3 | `enable-floating-button` | boolean | `false` |
+
+The E runs otherwise use the rig's Native AA baseline, as R6 does (do **not** write `native-poke-all-paired=false`).
+
 ## 5. The helper, `fbt_lib.sh`
 
-Put this in `hur-wifi-test-scripts/` and source it. It needs `HU`, `OUT` and `RUN` set. The thermal helpers are copied verbatim from `projection-teardown-and-relays-round1-brief.md`.
+Put this in `hur-wifi-test-scripts/` as `sd_lib.sh` and source it. It needs `HU`, `OUT` and `RUN` set. The thermal helpers are copied verbatim from `projection-teardown-and-relays-round1-brief.md`.
 
 ```bash
-# fbt_lib.sh : floating-button-touch round 1
+# sd_lib.sh : settings-defaults round 1
 PKG=com.andrerinas.headunitrevived
 RX=$PKG/com.andrerinas.openheadunit.automation.AutomationReceiver
 MAIN=$PKG/com.andrerinas.openheadunit.main.MainActivity
@@ -122,6 +150,40 @@ grade_tap() { local s; s=$(seg "$RUN-$1-ready" "$RUN-$1-done")
   echo "settings_start=$(echo "$s" | grep -acE 'START u0 .*cmp=com\.android\.settings/')"
   echo "ohu_start=$(echo "$s" | grep -acE 'START u0 .*cmp=com\.andrerinas\.headunitrevived/com\.andrerinas\.openheadunit\.main\.MainActivity')"
   echo "untrusted=$(echo "$s" | grep -aic 'untrusted touch')"; }
+# Settings file: pdump <label> saves it, pget <key> prints one key or "<key> ABSENT"
+pdump() { adb -s "$HU" shell run-as $PKG cat shared_prefs/settings.xml > "$OUT/$RUN.$1.settings.xml"; }
+pget() { adb -s "$HU" shell run-as $PKG cat shared_prefs/settings.xml | grep -oE "name=\"$1\"( value=\"[^\"]*\"|>[^<]*)" || echo "$1 ABSENT"; }
+# Phone (D-POCO): capture, and a marker on both units
+PH=4f4027e9
+pcap_start() { adb -s $PH logcat -c; stdbuf -oL adb -s $PH logcat -v time > "$OUT/$RUN.phone.txt" & PCAP=$!; }
+pcap_stop() { kill $PCAP 2>/dev/null; wait $PCAP 2>/dev/null; }
+pmark() { mark "$1"; adb -s $PH shell log -t AutomationMarker "$1"; }
+pseg() { sed -n "/AutomationMarker.*: $1\$/,/AutomationMarker.*: $2\$/p" "$OUT/$RUN.phone.txt"; }
+# hand_exit : ask the operator to tap Exit in Android Auto, wait for the focus request (max 180 s)
+hand_exit() { pmark "$RUN-exit-ready"
+  echo ">>> OPERATOR: on $HU, open the Android Auto app drawer and tap Exit, once."
+  local n=0; until sed -n "/AutomationMarker: $RUN-exit-ready\$/,\$p" "$(CAP)" | grep -aqF 'Video Focus NATIVE received'; do
+    n=$((n+1)); [ $n -ge 900 ] && break; sleep 0.2; done
+  sleep 20; front > "$OUT/$RUN.front-after-exit.txt"; pmark "$RUN-exit-done"; }
+# grade_exit : the counts every E run is graded on
+grade_exit() { local s; s=$(seg "$RUN-exit-ready" "$RUN-exit-done")
+  echo "throughput_before=$(seg "$RUN-start" "$RUN-exit-ready" | grep -acF 'Throughput over')"
+  echo "native_focus=$(echo "$s" | grep -acF 'Video Focus NATIVE received. User clicked Exit in Android Auto.')"
+  echo "minimize=$(echo "$s" | grep -acF 'ExitAction: Minimizing projection to OEM Launcher')"
+  echo "disconnect=$(echo "$s" | grep -acF 'ExitAction: Disconnecting projection session')"
+  echo "user_exit=$(echo "$s" | grep -acF 'AapService: Native AA user exit. Stopping active launcher.')"
+  echo "throughput_after=$(echo "$s" | grep -acF 'Throughput over')"
+  echo "phone_aa_before=$(pseg "$RUN-start" "$RUN-exit-ready" | grep -acE ' (GH|CAR)\.')"
+  echo "phone_byebye=$(pseg "$RUN-exit-ready" "$RUN-exit-done" | grep -aic byebye)"
+  echo "front_after=$(cat "$OUT/$RUN.front-after-exit.txt")"; }
+# hand_save : open Settings on the toast row, ask the operator to flip it and Save (max 180 s)
+SETTINGS=$PKG/com.andrerinas.openheadunit.main.SettingsActivity
+hand_save() { adb -s "$HU" shell am start -n $SETTINGS --ei extra_destination 0 --es extra_search_query "Show Toast" >/dev/null; sleep 5; shot settings
+  mark "$RUN-save-ready"; echo ">>> OPERATOR: on $HU, flip the 'Show Toast Messages' switch once, then tap Save."
+  local n=0; until pget show-toast-messages | grep -q 'value="false"'; do n=$((n+1)); [ $n -ge 90 ] && break; sleep 2; done
+  sleep 3; mark "$RUN-save-done"; }
+# frozen : how many of the five untouched keys are on disk now
+frozen() { local c=0 k; for k in hud_mirroring hide-clock hide-battery-level fps-limit aa-exit-action; do pget $k | grep -q ABSENT || c=$((c+1)); done; echo "frozen=$c"; }
 ```
 
 **Where to tap (`TAPX`, `TAPY`).** Take them from `win`'s `mAttrs={(x,y)(WxH)` line: `TAPX = x + W/2`, `TAPY = y + H/2`. These are screen coordinates. Say them to the operator together with the C0 screenshot, which shows the visible button at that spot. On D-SAM, check the coordinates against a `uiautomator dump` (see `D-SAM-and-D-HP.md`).
@@ -144,6 +206,12 @@ Every line from the app was checked with `grep -F` against `9ccadb7f`. Every fra
 | Tap happened | `BTN_TOUCH +DOWN` or `ABS_MT_TRACKING_ID +0...` | `$RUN.<label>.getevent` | n/a |
 | Projection | `Throughput over` | HU capture | INFO |
 | Marker | `AutomationMarker: <label>` | HU capture | WARN |
+| Exit tapped | `Video Focus NATIVE received. User clicked Exit in Android Auto.` | HU capture | INFO |
+| Exit minimized | `ExitAction: Minimizing projection to OEM Launcher` | HU capture | INFO |
+| Exit disconnected | `ExitAction: Disconnecting projection session` | HU capture | INFO |
+| Session torn down | `AapService: Native AA user exit. Stopping active launcher.` | HU capture | INFO |
+| Address filled | `AapService: filled in this device's Bluetooth address` | HU capture | INFO |
+| Phone side active | a ` GH.` or ` CAR.` tag | phone capture | framework |
 
 `log-level` = 2 (INFO) carries every app line above. Leave the rig's log level unless it is above 2.
 
@@ -151,7 +219,7 @@ The exact text of the untrusted-touch line was not checked against AOSP. The cas
 
 ## 7. Runs
 
-Units: **D-HU** (API 34) for R1 to R4 and R6, **D-SAM** (API 19) for R5, **D-POCO** as the phone in R6 only. Every phone stays in airplane mode except during R6. For each run: `RUN=<id>`, `apk_check` with that arm's md5, force-stop, write the keys, `cap_start`, then the steps. `cap_stop` at the end. Reset between runs with the template's §3a commands.
+Units: **D-HU** (API 34) for R1 to R4, R6, E1 to E3 and S0 to S2, **D-SAM** (API 19) for R5, **D-POCO** as the phone in R6 and E1 to E3 only. Every phone stays in airplane mode except during R6 and the E runs. For each run: `RUN=<id>`, `apk_check` with that arm's md5, force-stop, write the keys, `cap_start`, then the steps. `cap_stop` at the end. Reset between runs with the template's §3a commands.
 
 **A tap that misses.** If `touch_downs` is 0, ask the operator again, at most twice per tap. After three misses the run is UNTESTABLE (operator unavailable). If `touch_downs` is 2 or more, grade it anyway and give the count.
 
@@ -235,7 +303,49 @@ Grade:
 
 The fade itself (300 ms, seen on screen) is not scripted. Report what `R6-connected.png` and `R6-drop.png` show as unconfirmed.
 
-**Stop rule:** stop the round after R6, or after 3 runs in a row are UNTESTABLE for the same reason.
+### E1 to E3: the Exit default (D-HU + D-POCO)
+
+| Run | Arm | `aa-exit-action` before | Point |
+|---|---|---|---|
+| E1 | A | absent | The defect: an untouched setting minimizes on A |
+| E2 | B | absent | **Point of the round for Exit**: an untouched setting disconnects on B |
+| E3 | B | `0` | A stored choice is kept; the old Bluetooth address is replaced |
+
+Steps for each, after `apk_check` with that arm's md5:
+
+1. Phone airplane mode on. HU: force-stop, write the keys (§4), read each back with `pget`, then `cap_start` and `pcap_start`.
+2. Launch `MainActivity`, `sleep 15`, `pmark $RUN-start`.
+3. Phone: airplane mode off, then `svc wifi enable` and `svc bluetooth enable`, and verify with `dumpsys`, as R6 does. Wait up to 90 s for `Throughput over` in the HU capture. If none, the run is INCONCLUSIVE (no session).
+4. `sleep 10`, then `hand_exit`, then `grade_exit`.
+5. `send ACTION_EXIT`, `sleep 5`, `pmark $RUN-end`. Phone airplane mode on. `cap_stop`, `pcap_stop`.
+6. HU force-stop, then `pget aa-exit-action` and `pget bt-address`, and `pdump after`.
+
+Every E run needs `throughput_before` ≥ 1, `phone_aa_before` ≥ 1 and `native_focus` ≥ 1, or it is INCONCLUSIVE. Report `phone_byebye` and `front_after` in every run; they are not graded.
+
+- **E1 PASS (defect reproduced):** `minimize` ≥ 1, `disconnect` = 0, `user_exit` = 0. `aa-exit-action` is still ABSENT afterwards.
+- **E1 FAIL (prediction refuted):** `disconnect` ≥ 1. Say so plainly.
+- **E2 PASS:** `disconnect` ≥ 1, `user_exit` ≥ 1, `minimize` = 0, `throughput_after` = 0. `aa-exit-action` is still ABSENT afterwards (an exit writes nothing).
+- **E3 PASS:** `minimize` ≥ 1, `disconnect` = 0, `user_exit` = 0, and `aa-exit-action` still reads `value="0"` afterwards. For the address: if the HU capture has `filled in this device's Bluetooth address` ≥ 1, `bt-address` afterwards must equal the address that line names and must not be `40:EF:4C:A3:CB:A5`. If the line is absent, report that row as INCONCLUSIVE (this unit's address could not be read), not as a FAIL.
+
+### S0 to S2: the Save rule (D-HU only, no phone)
+
+For each: `apk_check` with that arm's md5, force-stop, delete the six keys (§4), check all six read ABSENT with `pget`, `cap_start`. Then:
+
+- **S0 (B, control, no Save):** `adb -s $HU shell am start -n $SETTINGS --ei extra_destination 0 --es extra_search_query "Show Toast"`, `sleep 5`, `adb -s $HU shell input keyevent 4`, `sleep 3`, force-stop, `frozen`, `pdump after`. This shows what opening the screen writes by itself. **PASS:** `frozen=0`.
+- **S1 (A) and S2 (B):** `hand_save`, then force-stop, `frozen`, `pget show-toast-messages`, `pdump after`. `cap_stop`.
+
+| Run | PASS |
+|---|---|
+| S1 (A) | `show-toast-messages` reads `value="false"` and `frozen` ≥ 4 (defect reproduced) |
+| S2 (B) | `show-toast-messages` reads `value="false"` and `frozen` = 0 |
+
+- If `show-toast-messages` never reads false within 180 s, the Save did not happen: ask the operator once more, then mark the run UNTESTABLE.
+- If S1 gives `frozen` ≤ 3, S2 is INCONCLUSIVE whatever it shows, because A did not freeze the keys on this unit.
+- Also report the number of keys in `round-start` and in each `after` file (`grep -c 'name="' <file>`), so the host sees the full size of the write.
+
+After S2, restore `round-start.settings.xml` with the app stopped (the template's §1 notes on pushing a whole file back apply) and read back `aa-exit-action` and `bt-address`.
+
+**Stop rule:** stop the round after S2, or after 3 runs in a row are UNTESTABLE for the same reason.
 
 ## 8. Do not re-run
 
@@ -246,3 +356,5 @@ Nothing. This is the thread's first round.
 1. R1: `untrusted` and `settings_start`, which together say whether the merged build blocks taps on Android 12+.
 2. R2 and R3: `settings_start` and `untrusted`, which say whether the fix lets the tap through on D-HU.
 3. R4 and R5 `t80`: `ohu_start`, which says whether the button still opens the app where it is meant to.
+4. E1 and E2: `minimize`, `disconnect` and `user_exit`, which say whether an untouched setting now ends the session.
+5. S1 and S2: `frozen`, which says whether one Save still writes every untouched default to disk.
