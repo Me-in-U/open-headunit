@@ -129,3 +129,17 @@ after it had already contaminated a run.
   it means every bonded phone gets poked rather than none. A round wanting a quiet head unit writes
   `<boolean name="native-poke-all-paired" value="false" />` explicitly. A brief that says "no phone
   should be poked" and clears only the MAC lists has not asked for what it means.
+
+- **Injected taps, when the operator says so.** The operator's standing instruction (settings-defaults
+  round 1): if a run needs a tap no verb covers and the operator cannot hand-tap it, the tester may use
+  `adb shell input tap`, at most 5 per run and as few as it takes. Find the coordinates from a
+  `uiautomator dump` or a screenshot first and list every injected tap in Setup notes. Injected touches
+  never reach `/dev/input`, so a `getevent` recorder reports 0 touches for them; grade from log counts.
+  Never ask the operator to tap an invisible target (a 0% button) or one that appears well before the
+  recorder arms: round 1 lost three R4 attempts that way.
+- **Stock Settings hides our overlay on Android 12 and later.** It sets `HIDE_NON_SYSTEM_OVERLAY_WINDOWS`
+  (so does the files app), and the floating button is force-hidden over them, so neither can sit under
+  a floating-button tap test on D-HU. The OEM settings app (`com.zqc.zqcsettings`) and the clock do not.
+  D-HU's own assist ball (top centre of the screen) is not ours. `shown=false alpha=0.0` on a window
+  header line is unreliable on D-HU; read the LayoutParams `alpha=` from the `mAttrs` line instead.
+- **API 19 logs no activity `START` line.** On D-SAM grade a tap from `mResumedActivity` after it.
