@@ -81,6 +81,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
+- `call-audio-route-round1-brief.md` (measurement on `main` `28d73e2f`, D-HU and D-MOTO with the KY Pro intercom; hand-rung calls; I-car against I-moto is the point)
 - `pr-1076-text-keycodes-round1-brief.md` (D-HU with D-POCO, A/B; R1 is the point)
 - `update-direct-apk-link-round1-brief.md` (candidate `4ebe61bc` with a local test version name; D-SAM and D-HP with Firefox 68, D-HU as control; no phone; hand taps for the update dialog)
 - `pr-1045-framing-round3-brief.md` (round 2's candidate `9b8f8366` on main `7102b428`, APK reused; candidate only, D-HU with D-POCO; A1-C title check with a fixed helper, A2-C 10 min behind a load gate; about 1 hour)
@@ -119,6 +120,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
+| `call-audio-route` | Round 1 queued | `call-audio-route-round1-brief.md`. Measures whether Motorcycle plus head unit microphone off moves a phone call's audio, with and without an intercom on the phone, and where the assistant opens SCO. No candidate. |
 | `settings-defaults` | Round 2 queued | `settings-defaults-round2-brief.md`. `59f34df2`: an Exit in Android Auto now ends the session as a user exit (round 1 E2 FAIL: the flag was read after the transport was dropped). Reruns E2 twice, adds E4 (a dropped phone still recovers), and R1 at 90% opacity. Round 1: `settings-defaults-round1-results.md`. |
 | `usb-reattach` | Round 1 queued | `usb-reattach-round1-brief.md`. `37bbe71e`: a failed USB handshake now reaches the stale-accessory recovery (AOA re-switch, then USB reset). |
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
