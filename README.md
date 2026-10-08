@@ -77,6 +77,7 @@ were reported under another filename, and are listed so the pairing rule does no
 - `zlink-aa-sink-decision-brief.md`, PC only, the descriptor decode and disassembly part two could not run; tools are in `tools/zbt/`
 - `audio-focus-round11-brief.md`
 - `link-stall-periodic-scan-round4-brief.md` (2.4 GHz plus constrained memory; round 5 ran first and PASSed)
+- `bluetooth-audio-disabled-usb-connect-round4-brief.md` (measurement round on `fff96699`, no fix on trial; skip arm S1 to S3 is the point)
 - `video-dropped-frame-keyframe-round7-brief.md` (R1 is a desk check, R2 optional)
 - `projection-raise-round5-brief.md`
 - `station-scan-round1-brief.md` (D-POCO, D-HU and D-SAM as head units, D-MOTO as phone; measurement, no candidate)
@@ -119,7 +120,7 @@ by `bssid-round1-results.md` and its addendum.
 |---|---|---|
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |
-| `bluetooth-audio-disabled-usb-connect` | ROUND 3 DONE | `bluetooth-audio-disabled-usb-connect-round3-results.md`, SHA `fff96699`. U5a PASS (5 of 5 pulls RESTORED), N0p/N4a/N4b PASS. Harness verb count is one short; N4a2 void (operator touch), N4a2x re-run. |
+| `bluetooth-audio-disabled-usb-connect` | ROUND 4 BRIEFED | `bluetooth-audio-disabled-usb-connect-round4-brief.md` queued, same SHA `fff96699`, measures the greyed switch and `bt-announce=skip`. Round 3: `bluetooth-audio-disabled-usb-connect-round3-results.md`, SHA `fff96699`. U5a PASS (5 of 5 pulls RESTORED), N0p/N4a/N4b PASS. Harness verb count is one short; N4a2 void (operator touch), N4a2x re-run. |
 | `projection-teardown-and-relays` | **Round 3 DONE** | `projection-teardown-and-relays-round3-results.md`. R0, R4E-B, R4E-C, R4-C (3 IN_WINDOW: 1 adopt, 2 join, SSL 3/3), R4L-C all PASS on `a70ba7e2`; early-dial reset did not reproduce. R4L-C redial left no picture in 45 s (report-only). |
 | `pr-1045-framing` | Round 2 queued; round 1 INCONCLUSIVE, no FAIL | `pr-1045-framing-round1-results.md`. F1 to F5, O1, O2, U2, U3, soak PASS; U1 reconnect fails the same on baseline, candidate and an older commit; D1, D2 not exercised. |
 | `pr-1046-video-retirement` | Round 2 queued; round 1 FAIL | `pr-1046-video-retirement-round1-results.md`. `e7c2949c` vs `7e9d813d`. GLES screen-off returns lose the warm-relaunch escalation (B1 reproduced, H.264 no picture in 90 s, H.265 87 to 99 s); Home and launcher returns recreate the surface on both builds. TEXTURE rule FAIL, rest PASS, V1M UNTESTABLE. |
