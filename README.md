@@ -121,7 +121,7 @@ by `bssid-round1-results.md` and its addendum.
 
 | Thread | State | Next |
 |---|---|---|
-| `settings-defaults` | Round 1 queued | `settings-defaults-round1-brief.md`. `41f5edaa`: Exit in Android Auto disconnects by default again, a settings Save writes only what changed, the old hardcoded Bluetooth address is dropped, and below 10% the floating button lets taps through on Android 12+. |
+| `settings-defaults` | Round 1 queued | `settings-defaults-round1-brief.md`. `9e32cf47`: Exit in Android Auto disconnects by default again, a settings Save writes only what changed, the old hardcoded Bluetooth address is dropped, and below 10% the floating button lets taps through on Android 12+. |
 | `usb-reattach` | Round 1 queued | `usb-reattach-round1-brief.md`. `37bbe71e`: a failed USB handshake now reaches the stale-accessory recovery (AOA re-switch, then USB reset). |
 | `update-direct-apk-link` | Round 1 queued | `update-direct-apk-link-round1-brief.md`. `4ebe61bc`: below Android 5.0 "Check for updates" opens the release APK link, not the release page. |
 | `main-smoke` | Round 1 reported | `main-smoke-round1-results.md`. `7102b428`: S0, S2 (Native AA), S4 (Self Mode) PASS; S5 FAIL on a brief condition that cannot hold (SCREEN_OFF with a service started in the dark), hold and replay worked; S1, S3 UNTESTABLE. |

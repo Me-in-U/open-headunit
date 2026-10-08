@@ -5,9 +5,9 @@
 | Arm | Ref | SHA | Get it |
 |---|---|---|---|
 | A (baseline) | `main` | `f749b84c` | `git fetch fork && git checkout f749b84c` |
-| B (candidate) | `fix/settings-defaults` | `41f5edaa` | `git fetch fork && git checkout 41f5edaa` |
+| B (candidate) | `fix/settings-defaults` | `9e32cf47` | `git fetch fork && git checkout 9e32cf47` |
 
-The candidate is three commits on top of A: `9ccadb7f` (floating button), `86f8acdb` (old Bluetooth address) and `41f5edaa` (Exit default and Save rule). History was rewritten once before the round to fold two commits into one; nothing ran on the old SHAs. The branch was `fix/floating-button-touch` until this round and this brief was first pushed as `floating-button-touch-round1-brief.md` naming `9ccadb7f` only; it now covers the whole branch. No run of the old brief took place.
+The candidate is two commits on top of A: `9ccadb7f` (floating button) and `9e32cf47` (settings: the Save rule, the Exit default and the old Bluetooth address). History was rewritten before the round to fold three settings commits into one; nothing ran on the old SHAs. The branch was `fix/floating-button-touch` until this round and this brief was first pushed as `floating-button-touch-round1-brief.md` naming `9ccadb7f` only; it now covers the whole branch. No run of the old brief took place.
 
 **Build gate (R0).** Build both with `build_hur.sh` and copy each APK out of `apks/` as soon as it is built (`build_hur.sh` deletes the previous APK). Then run `run_unit_tests.sh` on B.
 
@@ -29,15 +29,15 @@ The candidate does two things:
 - Below a 10% floor the button is not touchable, so 5% also lets taps through. Before, only exactly 0% did.
 - Below the floor the opacity goes on the window (`LayoutParams.alpha`) and the view stays at 1.0. At or above the floor nothing changes: window alpha 1.0, view alpha animated.
 
-### The Exit default (`41f5edaa`)
+### The Exit default (`9e32cf47`)
 
 When the user taps Exit in the Android Auto app drawer, the phone sends a video focus request with mode `VIDEO_FOCUS_NATIVE`. Up to 3.3.1 the head unit ended the session on it. PR #954 (in A) added the setting "Android Auto Exit Action" with **Return to OEM Launcher (Minimize)** as the default, so on A the projection goes to the home screen and the session stays up. B makes **Disconnect Session** the default again. A stored value is kept: a user with `aa-exit-action` = `0` on disk still minimizes. There is no migration.
 
-### The Save rule (`41f5edaa`)
+### The Save rule (`9e32cf47`)
 
 Each settings screen loads every value into a pending field. On A, Save writes every one of them back, so one changed row puts every default on disk (a "frozen default"). B writes only the values that differ from what is stored. Prediction from the code, **not measured**: on A one Save adds many keys; on B it adds only the changed one.
 
-### The old Bluetooth address (`86f8acdb`)
+### The old Bluetooth address (`9e32cf47`)
 
 Up to v.1.14.2 the `bt-address` default was `40:EF:4C:A3:CB:A5`, one developer's own address, and a Save kept it on disk. B reads that value as empty, so `AapService.onCreate` fills in the detected address.
 
