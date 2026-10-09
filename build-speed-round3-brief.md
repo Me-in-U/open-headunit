@@ -4,7 +4,7 @@ Host only. **No head unit, no phone, no APK install.** One standing change to th
 
 ## 1. Build and baseline
 
-- Candidate: `fork/chore/build-speed` at `b97f96b9` (unchanged since round 2).
+- Candidate: `fork/chore/build-speed` at `44c75139`. It is round 2's `b97f96b9` squashed into one commit, with an identical tree, so round 2's numbers still apply.
 - Baseline: round 2's A1 (297.3 s, the first build of the candidate), A2 (177.3 s, cold full rebuild) and M2 (158.7 s, the setting below).
 
 ## 2. What this is and why
@@ -71,7 +71,7 @@ PASS: the file holds exactly the three lines above.
 ```bash
 source /home/oscar/Coding/StudioProjects/hur-wifi-test-scripts/bs2_env.sh; REPO=/home/oscar/Coding/StudioProjects/headunit-revived; OUT=$HOME/build-speed-round3; SCR3=/home/oscar/Coding/StudioProjects/ohu-bs3
 git -C "$REPO" fetch fork chore/build-speed
-git -C "$REPO" worktree add --detach "$SCR3" b97f96b94ac8c91cb8c9621a270dd022eb95e429
+git -C "$REPO" worktree add --detach "$SCR3" 44c751394ee88c90f26f2fb865ca951e20f0da06
 cp "$REPO/local.properties" "$SCR3/" 2>/dev/null
 PROBE=$SCR3 stop_daemons
 ( while :; do echo "$(date +%T) xmx=$(pgrep -af '[G]radleDaemon' | grep -o -- '-Xmx[0-9a-zA-Z]*' | head -1) kotlin_daemons=$(pgrep -fc '[K]otlinCompileDaemon')"; sleep 10; done ) > "$OUT/T2.daemons" 2>&1 & SAMP=$!
