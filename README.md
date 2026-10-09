@@ -85,6 +85,7 @@ in the commit that pushes the results.
 - `pr-1067-tls-pump-round3-brief.md` (round 2's candidate `7e7cbf53` on main `7102b428`, APK reused; candidate only, D-HU with D-POCO; KW-C 15 min behind a load gate, graded against round 2's KW-B; no operator; about 40 minutes)
 - `pr-1001-devserver-p2p-round1-brief.md` (B `0cbff004`, P `7f5bc6e9` = `fork/review/pr-1001`, F `ce5e61cb` = `fork/review/pr-1001-loopback-fix`; stage 1 D-POCO as head unit in Self Mode, stage 2 D-HU with D-POCO; R3 is the point; hand steps HS1 to HS4; renames D-HU's WiFi Direct device to OpenHU)
 - `usb-reattach-round2-brief.md` (candidate `37bbe71e` and main `7102b428`; the control arm, a plain second handshake with no AOA re-switch, is the point)
+- `build-speed-round1-brief.md` (host only, no devices; Gradle profiles of `main` `77914f18` on the tester PC; R6, kapt removed, is the point; about 1 hour with thermal waits)
 
 ## Threads
 
@@ -93,6 +94,7 @@ in the commit that pushes the results.
 | `call-audio-route` | Round 1 queued | `call-audio-route-round1-brief.md`. Measures whether Motorcycle plus head unit microphone off moves a phone call's audio, with and without an intercom on the phone, and where the assistant opens SCO. No candidate. |
 | `settings-defaults` | Round 2 reported | `settings-defaults-round2-results.md`. `77c0b1fe`: E2b, E2b-2 (Exit ends as user_exit, phone does not return), E4, R3b PASS; R1b shape 2 (window alpha capped at 0.8 on the merged build, tap passes at 0%); R2b skipped. |
 | `usb-reattach` | Round 2 queued | `usb-reattach-round2-brief.md`. Control arm on `37bbe71e`: does a plain second handshake recover the stale phone on `main` without an AOA re-switch. Round 1 results: `usb-reattach-round1-results.md`. |
+| `build-speed` | Round 1 queued | `build-speed-round1-brief.md`. Where the tester PC's 10 min APK build goes: build script flags, cold against warm daemon, swap, thermal, and the kapt saving. No candidate. |
 | `bluetooth-audio-disabled-usb-connect` | ROUND 4 BRIEFED | `bluetooth-audio-disabled-usb-connect-round4-brief.md` queued, same SHA `fff96699`, measures the greyed switch and `bt-announce=skip`. Round 3: `bluetooth-audio-disabled-usb-connect-round3-results.md`, SHA `fff96699`. U5a PASS (5 of 5 pulls RESTORED), N0p/N4a/N4b PASS. Harness verb count is one short; N4a2 void (operator touch), N4a2x re-run. |
 | `pr-1045-framing` | Round 2 INCONCLUSIVE, no FAIL | `pr-1045-framing-round2-results.md`. `8d7da0e94` vs main. R0, I5 (repair 2858 vs 2833 ms), P-U, U1 (6 of 6 both arms) PASS; A1, A2, U2S INCONCLUSIVE (phone title unreadable; A2 load not reached); CR not exercised. |
 | `pr-1047-session-reconnect` | Round 2 results in | `pr-1047-session-reconnect-round2-results.md`. Hold and 30 s fallback work; N1-C/N2 FAIL by the letter (t_ssl2 32.5-34.1 s, one phone no-return); N3 PASS x2, HS 3/3; U1, U2, D1 INCONCLUSIVE; D2, Stage N, N3-X UNTESTABLE. |
