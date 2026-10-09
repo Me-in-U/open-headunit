@@ -101,6 +101,13 @@ Read for every round: adb and shell traps, build and install, settings.xml, mark
   arm-A run; the md5 check caught it before any capture was taken. For an A/B, install a named APK
   with `adb install -r <specific-apk>` and verify the md5 every single time, and edit `settings.xml`
   directly rather than through a script that relaunches.
+- **`ohu_setkeys.py` wrote `set:key=` as a set holding one empty string.** The `set:` kind (added in
+  pr-1046 round 1) split the value with `v.split(',')`, so an empty value gave
+  `<set name="KEY"><string /></set>`, not `<set name="KEY" />`. The app read both shapes of
+  `connection-modes` as empty; no other set key was checked. The fix is one line:
+  `for item in (v.split(',') if v else []):`. pr-1042 round 1 fixed only its own copy. **Before a
+  round copies the script, fix the copy in `projection-teardown-and-relays-round3/`** and every other
+  folder a brief names as a source, then read back one empty `set:` write.
 - **`adb shell cat <apk> | md5sum` does not agree with a real `pull` plus `md5sum`.** Round 6 got
   two different hashes for a byte-identical 23419189-byte file. The pipe is a transport artefact;
   pull the file and hash it locally whenever a run grades APK identity.
