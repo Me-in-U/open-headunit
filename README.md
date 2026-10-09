@@ -83,7 +83,6 @@ in the commit that pushes the results.
 - `pr-1045-framing-round3-brief.md` (round 2's candidate `9b8f8366` on main `7102b428`, APK reused; candidate only, D-HU with D-POCO; A1-C title check with a fixed helper, A2-C 10 min behind a load gate; about 1 hour)
 - `pr-1067-tls-pump-round3-brief.md` (round 2's candidate `7e7cbf53` on main `7102b428`, APK reused; candidate only, D-HU with D-POCO; KW-C 15 min behind a load gate, graded against round 2's KW-B; no operator; about 40 minutes)
 - `pr-1001-devserver-p2p-round1-brief.md` (B `0cbff004`, P `7f5bc6e9` = `fork/review/pr-1001`, F `ce5e61cb` = `fork/review/pr-1001-loopback-fix`; stage 1 D-POCO as head unit in Self Mode, stage 2 D-HU with D-POCO; R3 is the point; hand steps HS1 to HS4; renames D-HU's WiFi Direct device to OpenHU)
-- `usb-reattach-round2-brief.md` (candidate `37bbe71e` and main `7102b428`; the control arm, a plain second handshake with no AOA re-switch, is the point)
 - `pr-1047-session-reconnect-round3-brief.md` (PR head `7cc36de8` on main `77914f18`, plus an export build for D-POCO; Stage A D-HU with D-POCO, Stage U D-POCO with the dongle and D-MOTO; N2 is the point; runs N2, ND, U1 only; each Save is two taps on dumped targets, 4 per run at most; Stage A unattended, Stage U needs the operator for cables; about 55 min)
 
 ## Threads
@@ -92,7 +91,7 @@ in the commit that pushes the results.
 |---|---|---|
 | `call-audio-route` | Round 1 queued | `call-audio-route-round1-brief.md`. Measures whether Motorcycle plus head unit microphone off moves a phone call's audio, with and without an intercom on the phone, and where the assistant opens SCO. No candidate. |
 | `settings-defaults` | Round 2 reported | `settings-defaults-round2-results.md`. `77c0b1fe`: E2b, E2b-2 (Exit ends as user_exit, phone does not return), E4, R3b PASS; R1b shape 2 (window alpha capped at 0.8 on the merged build, tap passes at 0%); R2b skipped. |
-| `usb-reattach` | Round 2 queued | `usb-reattach-round2-brief.md`. Control arm on `37bbe71e`: does a plain second handshake recover the stale phone on `main` without an AOA re-switch. Round 1 results: `usb-reattach-round1-results.md`. |
+| `usb-reattach` | Round 2 done | `usb-reattach-round2-results.md`. Plain retry on `main` recovered 0 of 11 cycles; candidate reset re-enumerated 8 of 8, re-switch 0 of 6; give-up, bound, banner and clearing all held (RG PASS). Round 1: `usb-reattach-round1-results.md`. |
 | `build-speed` | Round 1 done | `build-speed-round1-results.md`. Rig build `build_hur.sh` 243.6 s cold, 4.5 s warm; cold with kapt 270 s, without 215 to 231 s (kapt saves 39 to 55 s); every cold build swaps and peaks 90C or more. |
 | `bluetooth-audio-disabled-usb-connect` | ROUND 4 STOPPED | `bluetooth-audio-disabled-usb-connect-round4-results.md`: D-HP hosted, R1 on `fff96699` hit the abort rule (pairing request, no disabler) with D-HP and again with D-POCO as host, S and R2 to R3b not run. Round 3: `bluetooth-audio-disabled-usb-connect-round3-results.md`. |
 | `pr-1045-framing` | Round 2 INCONCLUSIVE, no FAIL | `pr-1045-framing-round2-results.md`. `8d7da0e94` vs main. R0, I5 (repair 2858 vs 2833 ms), P-U, U1 (6 of 6 both arms) PASS; A1, A2, U2S INCONCLUSIVE (phone title unreadable; A2 load not reached); CR not exercised. |
