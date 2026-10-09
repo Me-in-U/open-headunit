@@ -77,4 +77,4 @@ The brief runs R2b only if R1b is shape 1. R1b was shape 2.
 
 - E2b's helper window opens before the taps, so `throughput_after` will read at least 1 whenever a throughput line (every 5 s) falls in the 2 to 3 seconds between `exit-ready` and the Exit line. A fix is to start the window at `Video Focus NATIVE received`.
 - E4: after the phone returned there was no `Connection accepted from` line in the window, yet a session formed. If a later round needs to know how the phone came back (RFCOMM accept, the persistent WiFi Direct group, or the phone's own reconnect), it should read the lines between `E4-back` and the first `Throughput over`.
-- Evidence: release `rig-evidence-settings-defaults-round2`, asset `settings-defaults-round2-captures.zip` (to be uploaded when this file is pushed; the size and sha256 will be added in a follow-up commit).
+- Evidence: release `rig-evidence-settings-defaults-round2`, asset `settings-defaults-round2-captures.zip` (7503884 bytes), sha256 `61a63041e926f17bbbd800f93e90e7f90f74c18eedde90d06346c57f32429729`. The APKs are not in the zip; their md5s are in the header.
