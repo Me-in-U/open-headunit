@@ -84,6 +84,7 @@ in the commit that pushes the results.
 - `pr-1067-tls-pump-round3-brief.md` (round 2's candidate `7e7cbf53` on main `7102b428`, APK reused; candidate only, D-HU with D-POCO; KW-C 15 min behind a load gate, graded against round 2's KW-B; no operator; about 40 minutes)
 - `pr-1001-devserver-p2p-round1-brief.md` (B `0cbff004`, P `7f5bc6e9` = `fork/review/pr-1001`, F `ce5e61cb` = `fork/review/pr-1001-loopback-fix`; stage 1 D-POCO as head unit in Self Mode, stage 2 D-HU with D-POCO; R3 is the point; hand steps HS1 to HS4; renames D-HU's WiFi Direct device to OpenHU)
 - `usb-reattach-round2-brief.md` (candidate `37bbe71e` and main `7102b428`; the control arm, a plain second handshake with no AOA re-switch, is the point)
+- `pr-1047-session-reconnect-round3-brief.md` (PR head `7cc36de8` on main `77914f18`, plus an export build for D-POCO; Stage A D-HU with D-POCO, Stage U D-POCO with the dongle and D-MOTO; N2 is the point; every Save is a hand step; about 1 h 50 min)
 
 ## Threads
 
@@ -95,7 +96,7 @@ in the commit that pushes the results.
 | `build-speed` | Round 1 done | `build-speed-round1-results.md`. Rig build `build_hur.sh` 243.6 s cold, 4.5 s warm; cold with kapt 270 s, without 215 to 231 s (kapt saves 39 to 55 s); every cold build swaps and peaks 90C or more. |
 | `bluetooth-audio-disabled-usb-connect` | ROUND 4 STOPPED | `bluetooth-audio-disabled-usb-connect-round4-results.md`: D-HP hosted, R1 on `fff96699` hit the abort rule (pairing request, no disabler) with D-HP and again with D-POCO as host, S and R2 to R3b not run. Round 3: `bluetooth-audio-disabled-usb-connect-round3-results.md`. |
 | `pr-1045-framing` | Round 2 INCONCLUSIVE, no FAIL | `pr-1045-framing-round2-results.md`. `8d7da0e94` vs main. R0, I5 (repair 2858 vs 2833 ms), P-U, U1 (6 of 6 both arms) PASS; A1, A2, U2S INCONCLUSIVE (phone title unreadable; A2 load not reached); CR not exercised. |
-| `pr-1047-session-reconnect` | Round 2 results in | `pr-1047-session-reconnect-round2-results.md`. Hold and 30 s fallback work; N1-C/N2 FAIL by the letter (t_ssl2 32.5-34.1 s, one phone no-return); N3 PASS x2, HS 3/3; U1, U2, D1 INCONCLUSIVE; D2, Stage N, N3-X UNTESTABLE. |
+| `pr-1047-session-reconnect` | Round 3 queued | `pr-1047-session-reconnect-round3-brief.md`. Head `7cc36de8`: Native Save wakes at once (N2), Disconnect stops the wake (ND), USB Save keeps its retry (U1, U2). Round 2 results: `pr-1047-session-reconnect-round2-results.md` (N2 reconnect 32.5 to 34.1 s). |
 | `pr-1064-nearby-attempts` | Round 1 reported, round INCONCLUSIVE, no FAIL | `pr-1064-nearby-attempts-round1-results.md`. R0 PASS; N0 B 0/3 (Gearhead 17.9 refuses the helper launch), N1-N3 stopped; U1 B dongle never spent its budget, C not run. |
 | `pr-1065-reconnect-timers` | Round 1 reported, U1 INCONCLUSIVE | `pr-1065-reconnect-timers-round1-results.md`. C = `de1f9848` (same tree as brief). H 10/10 and N 5/5 match B; U1 all cycles masked by dongle re-enumeration; P INCONCLUSIVE (Gearhead 17.9 refuses helper). |
 | `pr-1067-tls-pump` | Round 2 INCONCLUSIVE, no FAIL | `pr-1067-tls-pump-round2-results.md`. `db3153cdd` vs main. R0, KW-B PASS; XW INCONCLUSIVE (20 clean exits, 0 defects, race never fired, bye to quit 502 to 505 ms); KW-C INCONCLUSIVE (phone sent 10x less video); exit lever was the phone's notification Disconnect. |
