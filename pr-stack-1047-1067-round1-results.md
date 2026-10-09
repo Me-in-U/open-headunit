@@ -195,3 +195,12 @@ For the merge question the brief names (K-S): the stack held 28 to 29 fps under 
 - **The `google.navigation:` helper intent raises a chooser on D-POCO** because the installed headunit app registers for that scheme. A package-pinned intent avoids it.
 - **Cleanup trap in the helpers:** `cap_stop` did not kill the A1-S readers when the stage was run from the tool shell, but killed every later reader when the same functions ran inside a script. Cause not chased; the scripts now count readers before and after.
 - **A Gradle daemon from the build outlives the build** and fails `rig_preflight.sh` until `rig_cleanup.sh kill` removes it.
+
+## Operator ruling (2026-10-09)
+
+Both FAILs are errors in the brief, not in the stack. Final verdicts: R0 PASS, A1-S PASS, **K-S PASS**, CR INCONCLUSIVE (not exercised, as pre-registered), **XS PASS**, US PASS.
+
+- **K-S, condition 9, overruled to PASS.** All five phone `Critical error` lines fall at the finish teardown, after `K-S-end` (23:22:27). Four are the `CAR.SERVICE` lines A1-S also shows. The fifth is `GH.WirelessStartup: Critical error encountered`, a second Gearhead logger reporting the same car-requested ByeBye. The brief's grep matched that logger too, so the cap of 4 counted the pattern, not a fault. None names a protocol refusal. The soak conditions that decide the merge question all held.
+- **XS, `clean=true`, overruled to PASS.** In this code only `AapControl.byebyeRequest`, the phone-initiated ByeBye, calls `quit(clean = true)`. An Exit in Android Auto ends the session from the head unit side (`ExitAction: Disconnecting projection session`, then our own `ByeBye write SENT`), so `quit()` runs with the default `false`. The same holds on `main` `77914f18`. The brief's expectation was wrong. The conditions that decide the run held: `state_user_exit` 1, `state_link_lost` 0, `accepted_after` 0, so the stack kept the user-exit fix.
+- **Not measured by this round:** the failed-write path of `quit()` (US ended on the detach, `write_failed` 0), reassembler credit leaks (CR), the Nearby route (Android Auto 17.9 refuses the Wireless Helper), and every Save and Disconnect claim of the session-reconnect PR. The last one moves to `pr-1047-session-reconnect-round3-brief.md` with its addendum, on this same tree.
+- **For later briefs:** the settings-defaults Exit taps no longer match D-POCO's Android Auto launcher. Pin the navigation intent to `com.google.android.apps.maps` on D-POCO.
