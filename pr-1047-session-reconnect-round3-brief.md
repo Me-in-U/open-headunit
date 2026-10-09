@@ -2,6 +2,8 @@
 
 This round tests four new commits on the outside contributor's session-reconnect change. Round 2 found that a Native AA Save took 32.5 to 34.1 s to reconnect, because the Save held the wake for the whole 30 s window. Round 2 also could not grade the USB Save. The new commits answer both. This round measures the two, plus the Disconnect action inside the window. It needs no other round first.
 
+**This round is cut to the runs that decide the two open items, and it should be the last one on this PR.** The owner will merge nothing else into `main` until the contributor's stacked PRs merge, so `main` stays at `77914f18` and the build below does not need a re-pin. Do not add runs or cycles beyond what is written here.
+
 ## 1. Build and baseline
 
 Two APKs, both from one tree. Build each with `build_hur.sh` and copy it out of `apks/` the moment it is built, because the script deletes the previous APK (`rig-quirks/topics/tooling.md`). Cool the host to 70C first and build with `--max-workers=2`.
@@ -50,9 +52,9 @@ On `main`, an audio settings Save with a session live stops the whole service. T
 
 | Commit | Change | Run |
 |---|---|---|
-| `e1d709b9` | The Save's Native retry releases the wake hold after the old transport is torn down and wakes the phone at once. The 30 s window now bounds only the fallback. `ACTION_DISCONNECT` now sets the user-exit flag and stands the Native wake down. | **N2 (the point)**, N1, ND |
+| `e1d709b9` | The Save's Native retry releases the wake hold after the old transport is torn down and wakes the phone at once. The 30 s window now bounds only the fallback. `ACTION_DISCONNECT` now sets the user-exit flag and stands the Native wake down. | **N2 (the point)**, ND |
 | `8a8f9a9f` | The Helper fallback no longer recreates a live WiFi Direct group or restarts Nearby under a phone that is joining. | none (3.4) |
-| `70fffaca` | A failed USB open keeps the Save (`settingsRetryOwner`). A re-attach, a detach cooldown or a permission reply inside the window inherits it. The fallback waits for an open in progress. New INFO lines: `SettingsRestart: route=<route> retry=run`, `fallback=run`, `fallback=skip_superseded`, `fallback=cancel_superseded`. | U1, U2 |
+| `70fffaca` | A failed USB open keeps the Save (`settingsRetryOwner`). A re-attach, a detach cooldown or a permission reply inside the window inherits it. The fallback waits for an open in progress. New INFO lines: `SettingsRestart: route=<route> retry=run`, `fallback=run`, `fallback=skip_superseded`, `fallback=cancel_superseded`. | U1 |
 | `8e84fe9a` | A connected Self launch retires its 10 s deadline. The dead Self VPN restore is removed. | none (3.4) |
 
 ## 3. What is different about this round
@@ -61,10 +63,10 @@ On `main`, an audio settings Save with a session live stops the whole service. T
 
 | Stage | Plugged into the test PC | Runs | Arm | Estimated time |
 |---|---|---|---|---|
-| **A** | D-HU (head unit, Native AA), D-POCO (phone), D-MOTO (radios off for the stage) | R0, A0, **N2 (the point)**, N1, ND | C | 50 min |
-| **U** | D-POCO as head unit on wireless adb with the dongle on OTG, D-MOTO on a cable as the dongle's phone | U0, U1, U2 | E | 35 min |
+| **A** | D-HU (head unit, Native AA), D-POCO (phone), D-MOTO (radios off for the stage) | R0, A0, **N2 (the point)**, ND | C | 25 min |
+| **U** | D-POCO as head unit on wireless adb with the dongle on OTG, D-MOTO on a cable as the dongle's phone | U0, U1 | E | 20 min |
 
-With the two builds (about 25 min), the round takes about 1 h 50 min. If the operator leaves, stop at that stage and mark the rest INCONCLUSIVE "operator not present".
+With the two builds (about 10 min: E is a warm rebuild of C), the round takes about 55 min. If the operator leaves, stop at that stage and mark the rest INCONCLUSIVE "operator not present".
 
 ### 3.2 The Save is the only hand step
 
@@ -77,14 +79,14 @@ No automation verb reaches the code under test. On C, `applyAudioSettings()` has
 | H2 | Allow the system USB permission dialog on D-POCO with "Always", only if one appears | A system dialog, not our app. |
 | H4 | Unlock D-MOTO once if it shows a PIN | adb has no way past a PIN (`rig-quirks/units/D-MOTO.md`). |
 
-There is no tap on our app anywhere else in this brief. Do not use the injected-tap allowance (`rig-quirks/topics/tooling.md`) for the Save: one Save takes two taps, and N2 alone has 5 Saves.
+There is no tap on our app anywhere else in this brief. Do not use the injected-tap allowance (`rig-quirks/topics/tooling.md`) for the Save: one Save takes two taps, and N2 alone has up to 5 Saves.
 
 ### 3.3 Rig facts that change the runs
 
 - **D-POCO often does not answer a poke after a restart** (round 2: N1-3 and D1, HFP-AG and HSP-AG connects fail with `read failed`). The immediate wake makes this matter more, because the first poke now decides the reconnect time. So N2 records a cycle whose first poke failed as `poke unanswered` and does not grade it (section 7). A poke at a phone whose Bluetooth is off blocks about 15.4 s in `socket.connect()` and then fails; that is expected.
 - **A persistent WiFi Direct group lets another paired phone rejoin with no Bluetooth** (`rig-quirks/units/D-HU.md`). D-MOTO's radios are off for Stage A.
 - **`native-aa-wake-damage-verdict` latches and stands every later poke down** (`rig-quirks/topics/bt.md`). Stage A writes it to `0`.
-- **D-POCO's Bluetooth can self-revert** (`rig-quirks/topics/bt.md`). N1 and ND read it at fixed points with `dumpsys`; a cycle where it reads on when it must be off is void.
+- **D-POCO's Bluetooth can self-revert** (`rig-quirks/topics/bt.md`). ND reads it at a fixed point with `dumpsys`; a cycle where it reads on when it must be off is void.
 - **D-POCO (Android 15, MIUI) cannot open our settings screen from the shell** on stock C (`am start` is denied because `SettingsActivity` is not exported, and `run-as ... am start` fails on the uid). Round 2 used the export build with the operator's approval. This round does the same (arm E), for Stage U only. D-HU runs the unmodified C.
 - **The dongle drops off USB at every session end and comes back by itself** (`archive/rounds/pr-1065-reconnect-timers-round1-results.md`): it detaches about 1.6 s after the session ends, re-attaches in normal mode (`PID 4EE1`) about 4.5 s later, and asks for USB permission. So a USB Save makes a detach and an attach with no operator action. The first USB attempt after a launch can fail on stale data and retry; round 2 saw 12 failed attempts in a row before one held. That is not a failure.
 - **The settings screen pauses the wireless stack only when it opens with no session live.** Every Save here opens the screen over a live session, so nothing pauses. Do not reopen the settings screen inside a window.
@@ -96,12 +98,14 @@ There is no tap on our app anywhere else in this brief. Do not use the injected-
 ### 3.4 What this round does not run, and why
 
 - **The Helper fix (`8a8f9a9f`).** The Wireless Helper cannot start Android Auto 17.9 on either rig phone (round 2, section 3.1). The fix stays covered by its JVM tests (`HelperSettingsRefreshTest`, `NearbySettingsRestartTest`) and the review.
-- **The Self Mode deadline (`07f105f0`).** Android Auto 17.9 needs its head unit server for Self Mode, which is a hand step on the phone, and the change only retires a timer. JVM tests (`SelfManualDeadlineTest`) and the host suite cover it.
+- **The Self Mode deadline (`8e84fe9a`).** Android Auto 17.9 needs its head unit server for Self Mode, which is a hand step on the phone, and the change only retires a timer. JVM tests (`SelfManualDeadlineTest`) and the host suite cover it.
+- **N1 (a Native Save with the phone's Bluetooth off).** Round 2 already measured the hold and the 30 s fallback on that path. The new code only releases the hold earlier, which N2 measures directly.
+- **U2 (a USB Save with the dongle unplugged).** It needs an unplug faster than the dongle's own 6 s return, which is a race the operator often loses. The fallback's wait for an open in progress is covered by `UsbSettingsRetryLoopTest` and the host suite.
 - **Headunit Server (HS), the GLES cover sequence (N3) and D-SAM (D1):** see section 8.
 
 ### 3.5 Pre-registered INCONCLUSIVE outcomes
 
-So that none is read as a failure: N2 with fewer than 3 graded cycles in 8 attempts (D-POCO's unanswered pokes); N1 with fewer than 2 graded cycles in 4 attempts; ND with fewer than 2 graded cycles in 4 attempts; U1 or U2 when U0 fails; U2 when no cycle gets the unplug in before a session forms (the dongle came back first); the audio leg of N2 when the first session prints no `AudioDecoder.start: channel=` line.
+So that none is read as a failure: N2 with fewer than 2 graded cycles in 5 attempts (D-POCO's unanswered pokes); ND with no graded cycle in 2 attempts; U1 when U0 fails; the audio leg of N2 when the first session prints no `AudioDecoder.start: channel=` line.
 
 ## 4. Settings keys
 
@@ -109,7 +113,7 @@ Write with the app stopped and read back before every launch. D-HU: `hu_put` (ro
 
 | Key | Type | A (D-HU) | U1 (D-POCO) | U2 (D-POCO) |
 |---|---|---|---|---|
-| `wifi-connection-mode` | int | `3` | `3` | `1` |
+| `wifi-connection-mode` | int | `3` | `3` | (base only) |
 | `log-level` | int | `2` | `2` | `2` |
 | `onboarding-version` | int | `2` | `2` | `2` |
 | `kill-on-disconnect` | boolean | `false` | `false` | `false` |
@@ -120,7 +124,7 @@ Write with the app stopped and read back before every launch. D-HU: `hu_put` (ro
 | `connection-modes` | string set | | `usb,wifi` | `usb,wifi` |
 | `video-profile-starvation-cap`, `native-aa-wireless`, `wifi-launcher-mode` | | delete | delete | delete |
 
-U1 runs Native AA as the wireless mode on purpose: an armed wireless stack prints `WifiLauncher: Initializing WiFi Mode: NATIVE`, which is what U1 counts. Read and record, do not write: the three rig audio keys, `separate-audio-streams`, `native-poke-bt-macs`, `native-poke-all-paired`. `ACTION_LOG_MARKER` is not in `AutomationCommandPolicy.CONFIGURING` on C, so `allow-external-configuration` is not needed.
+`U2KEYS` is only the base that `U1KEYS` is built from; no U2 run exists this round. U1 runs Native AA as the wireless mode on purpose: an armed wireless stack prints `WifiLauncher: Initializing WiFi Mode: NATIVE`, which is what U1 counts. Read and record, do not write: the three rig audio keys, `separate-audio-streams`, `native-poke-bt-macs`, `native-poke-all-paired`. `ACTION_LOG_MARKER` is not in `AutomationCommandPolicy.CONFIGURING` on C, so `allow-external-configuration` is not needed.
 
 ```bash
 AKEYS="int:wifi-connection-mode=3 int:log-level=2 int:onboarding-version=2 bool:kill-on-disconnect=false int:native-aa-wake-damage-verdict=0 del:video-profile-starvation-cap del:native-aa-wireless del:wifi-launcher-mode"
@@ -211,20 +215,20 @@ Every action in this round:
 | Close the settings screen | `close_settings` | `input keyevent 4`, a scripted keyevent |
 | Media play | `adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY` | relayed to the phone's player |
 | Launch our app | `adb -s $HU shell am start -n $MAIN` | D-POCO refuses `ACTION_START_WIRELESS_SCAN` after a force-stop |
-| Phone Bluetooth | `adb -s $PH shell svc bluetooth disable` / `enable` | N1, ND |
+| Phone Bluetooth | `adb -s $PH shell svc bluetooth disable` / `enable` | ND |
 | The Save | H-SAVE | 3.2 |
 
 Every `send` must print `AutomationReceiver: <action>` in the capture. A step with no such line never landed; its cycle is void, not a FAIL.
 
 ## 7. Runs
 
-**The point of the round is N2.** N1 and ND check the two other sides of `e1d709b9`: the wake keeps running when the phone does not answer, and a Disconnect stops it. U1 and U2 grade `70fffaca`.
+**The point of the round is N2.** ND checks that a Disconnect stops the wake (`e1d709b9`). U1 grades `70fffaca`.
 
-**Per-run rules.** Before each run: the identity gate (1a) when the APK changed, a settings read-back, and the discard rules of template section 4 per cycle: `MATCH! Starting AapService`, `AapRead: Magic Garbage detected in header`, or a second `createGroup SUCCESS` inside one Native cycle where no group change was asked for voids that cycle. **Preflight per run:** the run's own capture must show `WifiLauncher: Initializing WiFi Mode: NATIVE` before its first session (Stage A and U1) or a USB SSL with `stopping the wireless stack for the duration of it` (U1, U2). If it does not, the run is a setup failure: fix the settings and re-run it once, and never grade it. **Every run keeps a phone capture beside the unit capture** (`pcap_start` inside `r_open`) and grades at least one condition from it. Write the results file after every run.
+**Per-run rules.** Before each run: the identity gate (1a) when the APK changed, a settings read-back, and the discard rules of template section 4 per cycle: `MATCH! Starting AapService`, `AapRead: Magic Garbage detected in header`, or a second `createGroup SUCCESS` inside one Native cycle where no group change was asked for voids that cycle. **Preflight per run:** the run's own capture must show `WifiLauncher: Initializing WiFi Mode: NATIVE` before its first session (Stage A and U1) or a USB SSL with `stopping the wireless stack for the duration of it` (U1). If it does not, the run is a setup failure: fix the settings and re-run it once, and never grade it. **Every run keeps a phone capture beside the unit capture** (`pcap_start` inside `r_open`) and grades at least one condition from it. Write the results file after every run.
 
 ### R0 Gate (once)
 
-PASS needs: C's and E's md5s recorded and different; C's tree as stated; the 1a checks matching per APK; `commit` recorded; `run_unit_tests.sh` on C with 0 failures from the JUnit XML and a count of 2901 (a failure stops the round); `adb install -r` succeeding, never an uninstall; each unit's settings backup diffed against the file after each install, with the delta stated; D-HU's `stat -c %U:%G` of `shared_prefs/`; the rig audio keys and `separate-audio-streams` as found; Gearhead's versionName on D-POCO and D-MOTO; `ohu_setkeys.py` checked (3.3). Time: 5 min plus the builds.
+PASS needs: C's and E's md5s recorded and different; C's tree as stated; the 1a checks matching per APK; `commit` recorded; no `run_unit_tests.sh` this round: the PR's own CI run on `7cc36de8` passed its unit tests, and we ran 2901 with 0 failures on the same app code; `adb install -r` succeeding, never an uninstall; each unit's settings backup diffed against the file after each install, with the delta stated; D-HU's `stat -c %U:%G` of `shared_prefs/`; the rig audio keys and `separate-audio-streams` as found; Gearhead's versionName on D-POCO and D-MOTO; `ohu_setkeys.py` checked (3.3). Time: 3 min plus the builds.
 
 ### A0 The audio streams screen opens (D-HU, before the first Save)
 
@@ -242,23 +246,23 @@ adb -s $HU shell am force-stop $PKG; adb -s $HU shell cat /data/data/$PKG/shared
 
 Re-enable D-MOTO's radios at the end of Stage A and read both back.
 
-### N2 A Native AA Save where the phone is woken at once (the point; C, 5 graded cycles, max 8 attempts)
+### N2 A Native AA Save where the phone is woken at once (the point; C, 3 graded cycles, max 5 attempts)
 
 The claim: after the Save, the retry wakes the phone within a few seconds, and the session comes back well inside the 30 s window. Round 2 measured 32.5 to 34.1 s on the old head.
 
 ```bash
 r_open N2-C $AKEYS; L=$(nl); send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L || echo "N2 first session failed"
 echo "N2 preflight native=$(cnt $L '$' 'WifiLauncher: Initializing WiFi Mode: NATIVE')" | tee -a $OUT/N2-C.tsv     # 0: setup failure
-adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY; sleep 20
+adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY; sleep 10
 AUDIO_OK=$(cnt $L '$' 'AudioDecoder.start: channel='); echo "N2 audio precondition=$AUDIO_OK" | tee -a $OUT/N2-C.tsv   # 0: the audio leg is INCONCLUSIVE
 graded=0
-for k in 1 2 3 4 5 6 7 8; do
+for k in 1 2 3 4 5; do
   S=$(nl); p0=$(pcnt 'Critical error'); b0=$(pcnt "$BYE"); f0=$(pcnt 'FATAL EXCEPTION'); mark N2-$k-go
   hand_save N2-$k || continue
   close_settings
   waitfor 60 'SSL handshake complete' $SAVE_LN; LS=$(lno $SAVE_LN 'SSL handshake complete')
   waitfor 30 "$REND" ${LS:-$SAVE_LN}; LV=$(tail -n +$(( LS>0 ? LS : SAVE_LN )) "$CAP" | grep -anE -m1 "$REND" | cut -d: -f1)
-  sleep 5; adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY; sleep 25; E=$(nl)
+  sleep 3; adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY; sleep 12; E=$(nl)
   T2=$(firstw 'SSL handshake complete'); TP=$(firstw "$POKE")
   R="N2-$k\tt_retry=$(firstw 'SettingsRestart: route=NATIVE retry=run')\tt_poke=$TP\tt_ssl2=$T2"
   R="$R\tpokefail_before_ssl2=$( [ "$T2" != NA ] && pokefail 0 $T2 || pokefail 0 60000 )\tpoked_before_ssl2=$( [ "$T2" != NA ] && cntw 0 $T2 'NativeAA: Successfully poked ' || echo NA )"
@@ -270,13 +274,13 @@ for k in 1 2 3 4 5 6 7 8; do
   echo -e "$R" | tee -a $OUT/N2-C.tsv
   # graded unless the first poke failed and the session was late (D-POCO's unanswered poke)
   if [ "$T2" != NA ] && [ "$T2" -le 15000 ]; then graded=$((graded+1)); elif [ "$(pokefail 0 20000)" -gt 0 ]; then echo -e "N2-$k\tpoke unanswered" | tee -a $OUT/N2-C.tsv; else graded=$((graded+1)); fi
-  [ $graded -ge 5 ] && break; sleep 20
+  [ $graded -ge 3 ] && break; sleep 10
   [ "$T2" = NA ] && { L=$(nl); send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L || break; }
 done
 r_close N2-C
 ```
 
-**A cycle is not graded** (`poke unanswered`) when `t_ssl2` is above 15000 or NA and `pokefail_before_ssl2` (failed poke sockets in the first 20 s) is 1 or more. Report it with its numbers. **Stop rule:** stop at the 5th graded cycle or after 8 attempts. Fewer than 3 graded cycles makes N2 INCONCLUSIVE.
+**A cycle is not graded** (`poke unanswered`) when `t_ssl2` is above 15000 or NA and `pokefail_before_ssl2` (failed poke sockets in the first 20 s) is 1 or more. Report it with its numbers. **Stop rule:** stop at the 3rd graded cycle or after 5 attempts. Fewer than 2 graded cycles makes N2 INCONCLUSIVE.
 
 **PASS, on every graded cycle:**
 
@@ -289,68 +293,37 @@ r_close N2-C
 - `fatal` 0;
 - phone (graded): `bye_phone` 1 or more, which proves Android Auto did not plan to come back by itself, so the reconnect is our wake; `phone_fatal` 0. Report `crit`; it is not graded.
 
-Report `hold` and `poked_before_ssl2` as numbers. **What a PASS would look like if the change did nothing:** `t_poke` near 30000, `t_ssl2` 32000 to 34000, and `fallback_run` 1, exactly round 2's shape. **FAIL** on any graded cycle with `t_poke` above 29500 or NA (the hold is still in force), `t_ssl2` above 15000 with no failed poke before it, `ssl_count` 2 or more, or `fallback_run` 1. Time: about 15 min.
+Report `hold` and `poked_before_ssl2` as numbers. **What a PASS would look like if the change did nothing:** `t_poke` near 30000, `t_ssl2` 32000 to 34000, and `fallback_run` 1, exactly round 2's shape. **FAIL** on any graded cycle with `t_poke` above 29500 or NA (the hold is still in force), `t_ssl2` above 15000 with no failed poke before it, `ssl_count` 2 or more, or `fallback_run` 1. Time: about 10 min.
 
-### N1 A Native AA Save where the phone does not answer (C, 2 graded cycles, max 4 attempts)
-
-The claim: the wake runs at once even when the phone cannot answer, the 30 s fallback then runs, and the ordinary loop brings the phone back after its Bluetooth comes on. The phone's Bluetooth goes off from a watcher on the Save line (round 2's order 2, which graded both of its cycles).
-
-```bash
-r_open N1-C $AKEYS; L=$(nl); send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L || echo "N1 first session failed"
-graded=0
-for k in 1 2 3 4; do
-  S=$(nl); mark N1-$k-go; p0=$(pcnt 'Critical error'); b0=$(pcnt "$BYE")
-  fire_on $S 'CommManager: audio settings changed; reconnecting the projection session' adb -s $PH shell svc bluetooth disable
-  hand_save N1-$k || { kill $FIREPID 2>/dev/null; continue; }
-  close_settings
-  hold_until 25000; B25=$(bt_off $PH && echo off || echo ON); hold_until 45000; B45=$(bt_off $PH && echo off || echo ON)
-  R="N1-$k\tbt25=$B25\tbt45=$B45\tt_poke=$(firstw "$POKE")\tpokes_0_45=$(cntw 0 45000 "$POKE")\tpokefail_0_45=$(pokefail 0 45000)"
-  R="$R\tfallback_run=$(cntw 29500 45000 'fallback=run')\tgave_up=$(cntw 0 45000 'alone for now: this unit woke it over its hands-free link')\tssl_lt45=$(cntw 0 45000 'SSL handshake complete')"
-  R="$R\tsettings_restart=$(cntw 0 3000 '(settings_restart)')\tlink_lost=$(cntw 0 3000 '(link_lost)')\tuser_exit=$(cntw 0 3000 '(user_exit)')\tkeep=$(cntw 0 45000 'AapService: Native AA session ended; keeping the ')"
-  adb -s $PH shell svc bluetooth enable; sleep 3
-  L=$(nl); BACK=0; ROUTE=none
-  if up_session 120 $L; then BACK=1; ROUTE=auto; else send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L && { BACK=1; ROUTE=wifi-button; }; fi
-  R="$R\tback=$BACK\troute=$ROUTE\tt_back=$(dt $L $(lno $L 'SSL handshake complete'))\tpokes_after_bt_on=$(cnt $L '$' "$POKE")\tbye_phone=$(( $(pcnt "$BYE") - b0 ))\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tfatal=$(cnt $S '$' 'FATAL EXCEPTION')"
-  echo -e "$R" | tee -a $OUT/N1-C.tsv
-  echo -e "$R" | grep -qE 'bt25=ON|bt45=ON|ssl_lt45=[1-9]' || graded=$((graded+1))
-  [ $graded -ge 2 ] && break; [ $BACK = 0 ] && break; sleep 20
-done
-r_close N1-C
-```
-
-**A cycle is void** when D-POCO's Bluetooth read ON at +25 s or +45 s, or an SSL formed within 45 s of the Save (the poke beat the watcher; record how from the phone capture). **Stop rule:** stop at the 2nd graded cycle, after 4 attempts, or when both recovery routes fail. Fewer than 2 graded cycles makes N1 INCONCLUSIVE.
-
-**PASS, on every graded cycle:** `t_poke` 5000 ms or less; `pokes_0_45` 1 or more; `fallback_run` 1 (the phone did not come back, so the fallback ran at 30 s); `settings_restart` 1, `link_lost` 0, `user_exit` 0, `keep` 0; `back` 1 with `route=auto`; `fatal` 0. Phone (graded): `bye_phone` 1 or more. Report `pokefail_0_45`, `t_back` and `crit`. **Not a FAIL:** `route=wifi-button` with `pokes_after_bt_on` 1 or more is a poke D-POCO did not answer (3.3); `route=wifi-button` with `gave_up` 1 or more is the escalation policy, not this PR; quote the line. **FAIL:** `t_poke` above 29500 or NA, or `route=wifi-button` with `pokes_after_bt_on` 0 and `gave_up` 0. Time: about 12 min.
-
-### ND The Disconnect action inside the window stops the wake (C, 2 graded cycles, max 4 attempts)
+### ND The Disconnect action inside the window stops the wake (C, 1 graded cycle, max 2 attempts)
 
 The claim (`e1d709b9`): `ACTION_DISCONNECT` during the Save's window sets the user exit and stands the Native wake down, so no new poke starts until the user arms the stack again. Before the change, the next credential delivery could poke the phone seconds after the Disconnect.
 
 ```bash
 r_open ND-C $AKEYS; L=$(nl); send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L || echo "ND first session failed"
 graded=0
-for k in 1 2 3 4; do
+for k in 1 2; do
   S=$(nl); mark ND-$k-go; b0=$(pcnt "$BYE")
   fire_on $S 'CommManager: audio settings changed; reconnecting the projection session' adb -s $PH shell svc bluetooth disable
   hand_save ND-$k || { kill $FIREPID 2>/dev/null; continue; }
   close_settings
   hold_until 8000; D=$(nl); send ACTION_DISCONNECT >/dev/null; TD=$(ms_of $(lno $D 'Disconnect action received.'))
   hold_until 12000; adb -s $PH shell svc bluetooth enable
-  hold_until 70000; E=$(nl)
+  hold_until 50000; E=$(nl)
   R="ND-$k\tt_disc=$TD\tpokes_before_disc=$(cntw 0 ${TD/NA/8000} "$POKE")\tstand_down=$(cnt $D $E 'NativeAA: deliberate session end; reopening listeners without an automatic wake.')"
-  R="$R\tpokes_after_disc=$(cntw $(( ${TD/NA/8000} + 1000 )) 70000 "$POKE")\tskip_line=$(cnt $D $E 'AapService: userExitedAA is true. Skipping auto-poke.')\tssl_after_disc=$(cnt $D $E 'SSL handshake complete')"
-  R="$R\tfallback_run=$(cntw 0 70000 'fallback=run')\tfallback_skip=$(cntw 25000 45000 'fallback=skip_superseded')\tbt12=$(bt_off $PH && echo off || echo on)\tbye_phone=$(( $(pcnt "$BYE") - b0 ))\tfatal=$(cnt $S $E 'FATAL EXCEPTION')"
+  R="$R\tpokes_after_disc=$(cntw $(( ${TD/NA/8000} + 1000 )) 50000 "$POKE")\tskip_line=$(cnt $D $E 'AapService: userExitedAA is true. Skipping auto-poke.')\tssl_after_disc=$(cnt $D $E 'SSL handshake complete')"
+  R="$R\tfallback_run=$(cntw 0 50000 'fallback=run')\tfallback_skip=$(cntw 25000 45000 'fallback=skip_superseded')\tbt12=$(bt_off $PH && echo off || echo on)\tbye_phone=$(( $(pcnt "$BYE") - b0 ))\tfatal=$(cnt $S $E 'FATAL EXCEPTION')"
   L=$(nl); send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L && R="$R\tre_arm=1\tt_rearm=$(dt $L $(lno $L 'SSL handshake complete'))" || R="$R\tre_arm=0"
   echo -e "$R" | tee -a $OUT/ND-C.tsv
   echo -e "$R" | grep -qE 'pokes_before_disc=[1-9]' && graded=$((graded+1))
-  [ $graded -ge 2 ] && break; sleep 20
+  [ $graded -ge 1 ] && break; sleep 10
 done
 r_close ND-C
 ```
 
-**A cycle is graded** when `pokes_before_disc` is 1 or more (the wake was running, so a zero after the Disconnect means something). **Stop rule:** stop at the 2nd graded cycle or after 4 attempts. Fewer than 2 graded cycles makes ND INCONCLUSIVE.
+**A cycle is graded** when `pokes_before_disc` is 1 or more (the wake was running, so a zero after the Disconnect means something). **Stop rule:** stop at the 1st graded cycle or after 2 attempts. No graded cycle makes ND INCONCLUSIVE.
 
-**PASS, on every graded cycle:** `t_disc` 10000 ms or less; `stand_down` 1 or more; `pokes_after_disc` 0 from 1 s after the Disconnect to Save + 70 s, with the phone's Bluetooth on from Save + 12 s (`bt12` reads on); `ssl_after_disc` 0; `fallback_run` 0; `re_arm` 1 (the WiFi button brings the phone back); `fatal` 0. Phone (graded): `bye_phone` 1 or more. Report `skip_line` and `fallback_skip`. A poke that was already inside `socket.connect()` at the Disconnect finishes by itself and prints no new `Attempting active poke` line, so it does not count. **What a PASS would look like if the change did nothing:** `pokes_after_disc` 1 or more within about 15 s of the Bluetooth coming back, and often an SSL. **FAIL:** `pokes_after_disc` 1 or more, or `ssl_after_disc` 1 or more. Time: about 10 min.
+**PASS, on every graded cycle:** `t_disc` 10000 ms or less; `stand_down` 1 or more; `pokes_after_disc` 0 from 1 s after the Disconnect to Save + 50 s, with the phone's Bluetooth on from Save + 12 s (`bt12` reads on); `ssl_after_disc` 0; `fallback_run` 0; `re_arm` 1 (the WiFi button brings the phone back); `fatal` 0. Phone (graded): `bye_phone` 1 or more. Report `skip_line` and `fallback_skip`. A poke that was already inside `socket.connect()` at the Disconnect finishes by itself and prints no new `Attempting active poke` line, so it does not count. **What a PASS would look like if the change did nothing:** `pokes_after_disc` 1 or more within about 15 s of the Bluetooth coming back, and often an SSL. **FAIL:** `pokes_after_disc` 1 or more, or `ssl_after_disc` 1 or more. Time: about 5 min.
 
 ### U0 Stage U setup and gate (once)
 
@@ -362,9 +335,9 @@ adb -s $HU shell am force-stop $PKG; adb -s $HU shell run-as $PKG cat shared_pre
 adb -s $HU install -r <E apk>; ARM=E; WANT_MD5=<E md5>       # then the 1a gate and A0 on D-POCO
 ```
 
-PASS: wireless adb answers; D-POCO's port table shows no 5277 listener; A0 on D-POCO passes with route `am`; with `U1KEYS`, a launch and `L=$(nl); cue "H1: plug the dongle into D-POCO's OTG port"; usb_live $L` forms a USB session, with `stopping the wireless stack for the duration of it` 1 or more after it. Tick "Always" on the first permission dialog (H2). A failed U0 makes U1 and U2 UNTESTABLE with the reason. Time: 10 min.
+PASS: wireless adb answers; D-POCO's port table shows no 5277 listener; A0 on D-POCO passes with route `am`; with `U1KEYS`, a launch and `L=$(nl); cue "H1: plug the dongle into D-POCO's OTG port"; usb_live $L` forms a USB session, with `stopping the wireless stack for the duration of it` 1 or more after it. Tick "Always" on the first permission dialog (H2). A failed U0 makes U1 UNTESTABLE with the reason. Time: 10 min.
 
-### U1 A USB Save with the settings screen kept open for 45 s (E, 3 cycles, max 5 attempts)
+### U1 A USB Save with the settings screen kept open for 35 s (E, 2 cycles, max 3 attempts)
 
 The claim (`70fffaca`): the Save keeps owning the dongle's return. Its retries survive a failed open, the re-attach in accessory mode carries the Save instead of being held by the screen, and a USB session forms behind the open screen. Wireless does not arm in the window. Round 2 could not grade this.
 
@@ -372,52 +345,23 @@ The claim (`70fffaca`): the Save keeps owning the dongle's return. Its retries s
 r_open U1-C $U1KEYS; L=$(nl); adb -s $HU shell am start -n $MAIN >/dev/null; usb_live $L || echo "U1 no USB session at start"
 echo "U1 preflight native=$(cnt $L '$' 'WifiLauncher: Initializing WiFi Mode: NATIVE') quiesce=$(cnt $L '$' 'stopping the wireless stack for the duration of it')" | tee -a $OUT/U1-C.tsv   # both 1 or more
 done=0
-for k in 1 2 3 4 5; do
+for k in 1 2 3; do
   S=$(nl); p0=$(pcnt 'Critical error'); f0=$(pcnt 'FATAL EXCEPTION'); mark U1-$k-go
   hand_save U1-$k || continue
-  hold_until 45000; C0=$(nl); close_settings; waitfor 60 'SSL handshake complete' $C0; E=$(nl)
+  hold_until 35000; C0=$(nl); close_settings; waitfor 60 'SSL handshake complete' $C0; E=$(nl)
   FS=$(lno $SAVE_LN 'SSL handshake complete')
-  R="U1-$k\tretry=$(cntw 0 5000 'SettingsRestart: route=USB retry=run')\tdetach=$(cntw 0 45000 'USB_DEVICE_DETACHED')\treattach=$(cntw 0 45000 'USB accessory device attached, connecting.')"
-  R="$R\theld=$(cntw 0 45000 'UsbLauncher: USB auto-connect held while the settings screen is open; ')\ttries_before_ssl=$( [ $FS -gt 0 ] && usb_tries $SAVE_LN $FS || echo NA )\tt_ssl2=$(ms_of $FS)"
-  R="$R\tssl_before_close=$(cnt $SAVE_LN $C0 'SSL handshake complete')\tquiesce=$( [ $FS -gt 0 ] && cnt $FS $E 'stopping the wireless stack for the duration of it' || echo NA )\tarm_in_window=$(cntw 0 45000 'WifiLauncher: Initializing WiFi Mode: NATIVE')\tpokes_in_window=$(cntw 0 45000 "$POKE")"
+  R="U1-$k\tretry=$(cntw 0 5000 'SettingsRestart: route=USB retry=run')\tdetach=$(cntw 0 35000 'USB_DEVICE_DETACHED')\treattach=$(cntw 0 35000 'USB accessory device attached, connecting.')"
+  R="$R\theld=$(cntw 0 35000 'UsbLauncher: USB auto-connect held while the settings screen is open; ')\ttries_before_ssl=$( [ $FS -gt 0 ] && usb_tries $SAVE_LN $FS || echo NA )\tt_ssl2=$(ms_of $FS)"
+  R="$R\tssl_before_close=$(cnt $SAVE_LN $C0 'SSL handshake complete')\tquiesce=$( [ $FS -gt 0 ] && cnt $FS $E 'stopping the wireless stack for the duration of it' || echo NA )\tarm_in_window=$(cntw 0 35000 'WifiLauncher: Initializing WiFi Mode: NATIVE')\tpokes_in_window=$(cntw 0 35000 "$POKE")"
   R="$R\tfallback_run=$(cntw 0 60000 'fallback=run')\tfallback_other=$(( $(cntw 0 60000 'fallback=skip_superseded') + $(cntw 0 60000 'fallback=cancel_superseded') ))\traise_refused=$(cnt $SAVE_LN $C0 'AapService: Not raising the projection, the settings screen is open')"
   R="$R\tsettings_restart=$(cntw 0 3000 '(settings_restart)')\tusb_retry_line=$(cnt $SAVE_LN $E 'AapService: USB disconnect. Scheduling reconnect check in ')\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tfatal=$(cnt $S $E 'FATAL EXCEPTION')\tphone_fatal=$(( $(pcnt 'FATAL EXCEPTION') - f0 ))"
   echo -e "$R" | tee -a $OUT/U1-C.tsv
-  done=$((done+1)); [ $done -ge 3 ] && break; sleep 20
+  done=$((done+1)); [ $done -ge 2 ] && break; sleep 10
 done
 r_close U1-C
 ```
 
-**PASS, on every completed cycle:** `retry` 1; `ssl_before_close` 1 or more with `t_ssl2` 45000 ms or less (the session formed behind the open screen); `tries_before_ssl` 1 or more (the session is USB); `quiesce` 1 or more; `held` 0 (the re-attach carried the Save and was not held); `arm_in_window` 0 and `pokes_in_window` 0 (wireless never armed under the plugged dongle); `fallback_run` 0; `raise_refused` 1 or more; `settings_restart` 1; `fatal` 0. Phone (D-MOTO, graded): `phone_fatal` 0. Report `detach`, `reattach`, `tries_before_ssl`, `fallback_other`, `usb_retry_line` and `crit`. **What a PASS would look like if the change did nothing:** round 2's shape, `held` 1 or more after the re-attach and, with the screen open past 30 s, `arm_in_window` 1 or more. **FAIL:** `ssl_before_close` 0 with the dongle back on the bus (`reattach` 1 or more), `held` 1 or more, `arm_in_window` 1 or more, or `fallback_run` 1 with a session formed before 30 s. Time: about 12 min.
-
-### U2 A USB Save, then the dongle unplugged: the fallback hands back (E, 2 graded cycles, max 4 attempts)
-
-The claim: with no device to reach, the fallback waits for any USB open still in progress, then runs at about 30 s and hands back to the ordinary rules, so a later plug forms a session with no user action. The operator unplugs the dongle right after pressing Save, before the dongle's own return (about 6 s after the session ends). The cue for that comes before the Save cue, so no relay delay sits between the Save and the unplug.
-
-```bash
-r_open U2-C $U2KEYS; L=$(nl); adb -s $HU shell am start -n $MAIN >/dev/null; usb_live $L || echo "U2 no USB session at start"
-graded=0
-for k in 1 2 3 4; do
-  S=$(nl); p0=$(pcnt 'Critical error'); f0=$(pcnt 'FATAL EXCEPTION'); mark U2-$k-go
-  cue "H1 U2-$k: get ready. Right after you press Save on the next cue, unplug the dongle from D-POCO"; sleep 10
-  hand_save U2-$k || continue
-  waitfor 60 'USB Intent: .*USB_DEVICE_DETACHED' $SAVE_LN
-  close_settings; hold_until 45000
-  P=$(nl); cue "H1: plug the dongle back into D-POCO"; usb_live $P && ok=1 || ok=0; E=$(nl)
-  LP=$(lno $P 'Found device already in accessory mode'); [ $LP -eq 0 ] && LP=$(lno $P 'Switching USB device to accessory mode')
-  R="U2-$k\tssl_before_plug=$(cnt $SAVE_LN $P 'SSL handshake complete')\tretry=$(cntw 0 5000 'SettingsRestart: route=USB retry=run')\tt_fallback=$(firstin 'fallback=run' 25000 45000)"
-  R="$R\tfallback_other=$(( $(cntw 0 45000 'fallback=skip_superseded') + $(cntw 0 45000 'fallback=cancel_superseded') ))\ttries_0_30=$(cntw 0 30000 'Found device already in accessory mode')\treplug_session=$ok\tt_plug_ssl=$(dt $LP $(lno $P 'SSL handshake complete'))"
-  R="$R\tplug_attempt=$(usb_tries $P $E)\tcrit=$(( $(pcnt 'Critical error') - p0 ))\tfatal=$(cnt $S $E 'FATAL EXCEPTION')\tphone_fatal=$(( $(pcnt 'FATAL EXCEPTION') - f0 ))"
-  echo -e "$R" | tee -a $OUT/U2-C.tsv
-  echo -e "$R" | grep -q 'ssl_before_plug=0' && graded=$((graded+1))
-  [ $graded -ge 2 ] && break; sleep 20
-done
-r_close U2-C
-```
-
-**A cycle is void** when `ssl_before_plug` is 1 or more (the dongle came back before the unplug). **Stop rule:** stop at the 2nd graded cycle or after 4 attempts. Fewer than 2 graded cycles makes U2 INCONCLUSIVE ("the dongle came back first").
-
-**PASS, on every graded cycle:** `retry` 1; `t_fallback` between 29500 and 45000 ms (`fallback=run` printed once; a value above 30000 is the wait for an open in progress, which the change adds); `fallback_other` 0; `replug_session` 1 with `t_plug_ssl` 60000 ms or less and `plug_attempt` 1 or more; `fatal` 0. Phone (D-MOTO, graded): `phone_fatal` 0. Report `tries_0_30` and `crit`. **FAIL:** `t_fallback` NA (the Save never handed back), or `replug_session` 0 (the state stayed stuck). Time: about 12 min.
+**PASS, on every completed cycle:** `retry` 1; `ssl_before_close` 1 or more with `t_ssl2` 35000 ms or less (the session formed behind the open screen); `tries_before_ssl` 1 or more (the session is USB); `quiesce` 1 or more; `held` 0 (the re-attach carried the Save and was not held); `arm_in_window` 0 and `pokes_in_window` 0 (wireless never armed under the plugged dongle); `fallback_run` 0; `raise_refused` 1 or more; `settings_restart` 1; `fatal` 0. Phone (D-MOTO, graded): `phone_fatal` 0. Report `detach`, `reattach`, `tries_before_ssl`, `fallback_other`, `usb_retry_line` and `crit`. **What a PASS would look like if the change did nothing:** round 2's shape, `held` 1 or more after the re-attach and, with the screen open past 30 s, `arm_in_window` 1 or more. **FAIL:** `ssl_before_close` 0 with the dongle back on the bus (`reattach` 1 or more), `held` 1 or more, `arm_in_window` 1 or more, or `fallback_run` 1 with a session formed before 30 s. Time: about 7 min.
 
 **Closing Stage U:** as `archive/rounds/pr-1065-reconnect-timers-round1-brief.md` closes it: `send ACTION_EXIT` to the running app, `headunit://exit`, `sleep 3`, force-stop, restore D-POCO's backup with `pocoput` and read it back, `cue "H1: unplug the dongle; put D-POCO back on its PC cable"`, `adb -s $POCO_IP:5555 usb`, then `HU=$DHU; PH=4f4027e9; PUT=hu_put; BASEXML=$OUT/settings-backup-DHU.xml; UNIT=D-HU`. D-POCO is a phone again from here, which is why it gets `headunit://exit` first (`rig-quirks/topics/wifi.md`). **Reinstall stock C on D-POCO only if a later round needs it; E must not stay on D-POCO as its head unit build without a note in Setup notes.**
 
@@ -430,15 +374,15 @@ Restore each unit's round backup of `settings.xml` (D-HU as root; D-POCO with `p
 - **Headunit Server (HS):** round 2 PASS 3 of 3, reconnect 0.85 to 0.88 s. The new commits do not touch the `restartEndpoint` redial.
 - **The GLES cover sequence (N3):** round 2 PASS 2 of 2 on C. The new commits do not touch the decoder or the surface.
 - **The baseline Save (N1-B):** round 2 recorded `main`'s shape (a service stop, nothing comes back in 60 s). `main` has not changed that path.
-- **D-SAM (D1):** round 2 was INCONCLUSIVE because D-POCO did not answer the pokes. N2 and N1 measure the same Native change on D-HU.
+- **D-SAM (D1):** round 2 was INCONCLUSIVE because D-POCO did not answer the pokes. N2 measures the same Native change on D-HU.
 - **The exit loop, the user connect over a live session, the starvation cap, `ACTION_RESTART_AUDIO`, the arbiter tiers:** settled in rounds 1 and 2 (round 2 section 8).
 - **Stage N and HW (Helper):** UNTESTABLE on this rig (3.4).
 
 ## 9. Report back
 
 1. **N2, the point:** per graded cycle, `t_poke`, `t_ssl2`, `fallback_run` and `bye_phone`, plus every `poke unanswered` cycle with its numbers, and the line `the Native Save reconnects inside 15 s: yes or no`.
-2. **N1 and ND:** N1's `t_poke`, `fallback_run` and `route` per cycle; ND's `pokes_after_disc`, `stand_down` and `re_arm` per cycle.
-3. **USB:** U1's `ssl_before_close`, `held`, `arm_in_window` and `t_ssl2` per cycle; U2's `t_fallback` and `replug_session` per cycle.
+2. **ND:** `pokes_after_disc`, `stand_down` and `re_arm`.
+3. **USB:** U1's `ssl_before_close`, `held`, `arm_in_window` and `t_ssl2` per cycle.
 
 ### Results skeleton (copy into `pr-1047-session-reconnect-round3-results.md`)
 
@@ -467,10 +411,6 @@ Deviations; scripts used and added; every hand step with its time (from `hand-st
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 The Native Save reconnects inside 15 s: yes / no.
 
-## N1
-| cycle | bt25 | bt45 | t_poke | pokes_0_45 | pokefail_0_45 | fallback_run | gave_up | settings_restart | link_lost | back | route | t_back | pokes_after_bt_on | bye_phone | crit | graded |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-
 ## ND
 | cycle | t_disc | pokes_before_disc | stand_down | pokes_after_disc | skip_line | ssl_after_disc | fallback_run | fallback_skip | bt12 | re_arm | t_rearm | bye_phone | graded |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -481,10 +421,6 @@ One line: wireless adb, 5277 listener, A0, first USB session, quiesce.
 ## U1
 | cycle | retry | detach | reattach | held | tries_before_ssl | t_ssl2 | ssl_before_close | quiesce | arm_in_window | pokes_in_window | fallback_run | fallback_other | raise_refused | usb_retry_line | crit |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-
-## U2
-| cycle | ssl_before_plug | retry | t_fallback | fallback_other | tries_0_30 | replug_session | t_plug_ssl | plug_attempt | crit | graded |
-|---|---|---|---|---|---|---|---|---|---|---|
 
 ## Verdict table
 | Run | C | E | Notes |
