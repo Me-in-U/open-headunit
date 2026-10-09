@@ -150,3 +150,4 @@ after it had already contaminated a run.
   D-HU's own assist ball (top centre of the screen) is not ours. `shown=false alpha=0.0` on a window
   header line is unreliable on D-HU; read the LayoutParams `alpha=` from the `mAttrs` line instead.
 - **API 19 logs no activity `START` line.** On D-SAM grade a tap from `mResumedActivity` after it.
+- **The host PC carries a standing `~/.gradle/gradle.properties`** (from `build-speed` round 3): `org.gradle.jvmargs=-Xmx3g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC` and `kotlin.compiler.execution.strategy=in-process`. Every Gradle build here uses it, so Kotlin compiles inside the Gradle daemon and no separate Kotlin daemon appears. The candidate's build cache is on too, so a revisited source state restores from cache even in a new worktree; time a cold build with `--no-build-cache`.
