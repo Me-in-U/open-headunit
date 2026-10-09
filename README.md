@@ -84,7 +84,7 @@ in the commit that pushes the results.
 - `pr-1067-tls-pump-round3-brief.md` (round 2's candidate `7e7cbf53` on main `7102b428`, APK reused; candidate only, D-HU with D-POCO; KW-C 15 min behind a load gate, graded against round 2's KW-B; no operator; about 40 minutes)
 - `pr-1001-devserver-p2p-round1-brief.md` (B `0cbff004`, P `7f5bc6e9` = `fork/review/pr-1001`, F `ce5e61cb` = `fork/review/pr-1001-loopback-fix`; stage 1 D-POCO as head unit in Self Mode, stage 2 D-HU with D-POCO; R3 is the point; hand steps HS1 to HS4; renames D-HU's WiFi Direct device to OpenHU)
 - `usb-reattach-round2-brief.md` (candidate `37bbe71e` and main `7102b428`; the control arm, a plain second handshake with no AOA re-switch, is the point)
-- `pr-1047-session-reconnect-round3-brief.md` (PR head `7cc36de8` on main `77914f18`, plus an export build for D-POCO; Stage A D-HU with D-POCO, Stage U D-POCO with the dongle and D-MOTO; N2 is the point; runs N2, ND, U1 only; every Save is a hand step; about 55 min)
+- `pr-1047-session-reconnect-round3-brief.md` (PR head `7cc36de8` on main `77914f18`, plus an export build for D-POCO; Stage A D-HU with D-POCO, Stage U D-POCO with the dongle and D-MOTO; N2 is the point; runs N2, ND, U1 only; each Save is two taps on dumped targets, 4 per run at most; Stage A unattended, Stage U needs the operator for cables; about 55 min)
 
 ## Threads
 

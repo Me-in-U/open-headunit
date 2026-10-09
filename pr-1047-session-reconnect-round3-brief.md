@@ -63,23 +63,31 @@ On `main`, an audio settings Save with a session live stops the whole service. T
 
 | Stage | Plugged into the test PC | Runs | Arm | Estimated time |
 |---|---|---|---|---|
-| **A** | D-HU (head unit, Native AA), D-POCO (phone), D-MOTO (radios off for the stage) | R0, A0, **N2 (the point)**, ND | C | 25 min |
-| **U** | D-POCO as head unit on wireless adb with the dongle on OTG, D-MOTO on a cable as the dongle's phone | U0, U1 | E | 20 min |
+| **A** | D-HU (head unit, Native AA), D-POCO (phone), D-MOTO (radios off for the stage) | R0, A0, **N2 (the point)**, N2R only if needed, ND | C | 25 min, unattended |
+| **U** | D-POCO as head unit on wireless adb with the dongle on OTG, D-MOTO on a cable as the dongle's phone | U0, U1 | E | 20 min, operator for the cables only |
 
-With the two builds (about 10 min: E is a warm rebuild of C), the round takes about 55 min. If the operator leaves, stop at that stage and mark the rest INCONCLUSIVE "operator not present".
+With the two builds (about 10 min: E is a warm rebuild of C), the round takes about 55 min. Stage A needs no operator. Stage U needs one at its start and end, for the cables. If no operator is there for Stage U, mark U0 and U1 INCONCLUSIVE "operator not present".
 
-### 3.2 The Save is the only hand step
+### 3.2 The Save is two injected taps
 
-No automation verb reaches the code under test. On C, `applyAudioSettings()` has exactly two callers, `AudioStreamSettingsFragment.saveSettings` and `SettingsFragment.saveSettings`. `ACTION_SET_SETTINGS` writes the preferences and calls neither, and `ACTION_RESTART_AUDIO` rebuilds tracks only. So the Save works as in round 2 (its section 3.3): the script opens the audio streams screen, the operator flips "Separate audio streams" once and presses Save, and the script times everything from the Save line. **Every Save in this round is a hand step, so the operator must be present for both stages.** Ask for that once, before R0, together with H1 (the dongle cable) and H2 (the USB permission dialog).
+No automation verb reaches the code under test. On C, `applyAudioSettings()` has exactly two callers, `AudioStreamSettingsFragment.saveSettings` and `SettingsFragment.saveSettings`. `ACTION_SET_SETTINGS` writes the preferences and calls neither, and `ACTION_RESTART_AUDIO` rebuilds tracks only. So each Save is made with the operator's injected-tap allowance (`rig-quirks/topics/tooling.md`): **at most 5 taps per run, each on a target found in a `uiautomator dump`, never a search, a scroll, a swipe or typed text.** `tap_save` in `lib1047r3.sh` does it, and it counts and refuses a sixth tap.
+
+1. `open_audio` opens the audio streams screen by deep link (round 2's route), and `on_audio` confirms it is in front.
+2. A dump must show exactly one `:id/settingSwitch`. That is the "Separate Audio Streams" toggle, the only toggle on this screen (`AudioStreamSettingsFragment.updateSettingsList`). Tap 1 is its centre.
+3. A second dump must show `:id/save_button_widget` with `enabled="true"` and the text `Save (Reconnect needed)`. That text proves the screen holds a change. Tap 2 is its centre.
+4. The script waits up to 20 s for the Save line, and times everything from it.
+
+**If a target does not resolve** (0 or 2 or more matches, or the Save button is not armed), `tap_save` taps nothing more, records the reason, and the cycle is void. Do not retry with a guessed coordinate. The screen has no text field, so no keyboard can open. Every tap goes in `$OUT/taps.log` with its run, its target and its coordinates, and Setup notes list them all.
+
+**Tap budget per run:** N2 makes 2 Saves (4 taps). If N2 ends with fewer than 2 graded cycles, N2R repeats it once (4 taps). ND makes 1 Save, or 2 if the first cycle cannot be graded (2 or 4 taps). U1 makes 2 Saves (4 taps). A0 dumps the screen and taps nothing.
+
+The only hand steps left are physical, and Stage U asks for them in one batch before U0:
 
 | Id | Step | Reason no verb exists |
 |---|---|---|
-| H-SAVE | On the screen the script opened, flip "Separate audio streams" once, then press Save at the top right | The Save is the code under test and has no verb. |
-| H1 | Move D-POCO between its PC cable and wireless adb; plug and unplug the dongle when cued | A cable is hardware. |
-| H2 | Allow the system USB permission dialog on D-POCO with "Always", only if one appears | A system dialog, not our app. |
+| H1 | Move D-POCO between its PC cable and wireless adb; plug the dongle into D-POCO's OTG port at U0, and unplug it at the end | A cable is hardware. |
+| H2 | Allow the system USB permission dialog on D-POCO with "Always", only if one appears | A system dialog on MIUI; its layout is not ours to dump. |
 | H4 | Unlock D-MOTO once if it shows a PIN | adb has no way past a PIN (`rig-quirks/units/D-MOTO.md`). |
-
-There is no tap on our app anywhere else in this brief. Do not use the injected-tap allowance (`rig-quirks/topics/tooling.md`) for the Save: one Save takes two taps, and N2 alone has up to 5 Saves.
 
 ### 3.3 Rig facts that change the runs
 
@@ -105,7 +113,7 @@ There is no tap on our app anywhere else in this brief. Do not use the injected-
 
 ### 3.5 Pre-registered INCONCLUSIVE outcomes
 
-So that none is read as a failure: N2 with fewer than 2 graded cycles in 5 attempts (D-POCO's unanswered pokes); ND with no graded cycle in 2 attempts; U1 when U0 fails; the audio leg of N2 when the first session prints no `AudioDecoder.start: channel=` line.
+So that none is read as a failure: N2 with fewer than 2 graded cycles across N2 and N2R (D-POCO's unanswered pokes); a cycle voided by `tap_save` (a target did not resolve); ND with no graded cycle in 2 attempts; U1 when U0 fails; the audio leg of N2 when the first session prints no `AudioDecoder.start: channel=` line.
 
 ## 4. Settings keys
 
@@ -199,6 +207,28 @@ pokefail() { tail -n +"$SAVE_LN" "$CAP" | awk -v t0="$T0" -v a="$1" -v b="$2" 'f
 ms_of() { [ "$1" -gt 0 ] && echo $(( $(ms "$(tat $1)") - T0 )) || echo NA; }
 # usb_tries <from> <to> : USB attempt lines in capture lines from..to
 usb_tries() { echo $(( $(cnt $1 $2 'Found device already in accessory mode') + $(cnt $1 $2 'Switching USB device to accessory mode') + $(cnt $1 $2 'Single USB auto-connect: connecting to') )); }
+# --- the Save as two injected taps (section 3.2) ---
+eval "orig_$(declare -f r_open)"; r_open() { TAPS=0; orig_r_open "$@"; }      # the tap budget is per run
+ui_dump() { adb -s "$HU" shell uiautomator dump /sdcard/ohu-ui.xml >/dev/null 2>&1; adb -s "$HU" exec-out cat /sdcard/ohu-ui.xml > "$OUT/ui.xml"; [ -s "$OUT/ui.xml" ]; }
+# target <id> [text] : centre "x y" of the one node whose resource-id ends ":id/<id>" (and is enabled with that text); fails on 0 or 2+
+target() { python3 -I -c '
+import sys,re,xml.etree.ElementTree as ET
+want,txt=sys.argv[2],(sys.argv[3] if len(sys.argv)>3 else None)
+n=[e for e in ET.parse(sys.argv[1]).iter("node") if e.get("resource-id","").endswith(":id/"+want)]
+if txt is not None: n=[e for e in n if e.get("enabled")=="true" and e.get("text","").lower()==txt.lower()]
+if len(n)!=1: sys.exit("matches=%d"%len(n))
+x1,y1,x2,y2=map(int,re.findall(r"\d+",n[0].get("bounds"))); print((x1+x2)//2,(y1+y2)//2)' "$OUT/ui.xml" "$@"; }
+tap_xy() { [ "${TAPS:-0}" -ge 5 ] && { echo "$(date +%T) $RUN REFUSED tap 6 ($1)" >> "$OUT/taps.log"; return 1; }
+  TAPS=$((TAPS+1)); echo "$(date +%T) $RUN tap$TAPS $1 $2 $3" >> "$OUT/taps.log"; adb -s "$HU" shell input tap "$2" "$3"; }
+# tap_save <label> : open the screen, tap the toggle, tap Save, wait for the Save line. Sets SAVE_LN, T0, H0. 2 = void cycle.
+tap_save() { local L xy; L=$(nl)
+  open_audio || { echo -e "$1\tNO_AUDIO_SCREEN" | tee -a "$OUT/$RUN.tsv"; return 2; }
+  ui_dump && xy=$(target settingSwitch) || { echo -e "$1\tNO_TOGGLE_TARGET" | tee -a "$OUT/$RUN.tsv"; return 2; }
+  mark "$1-tap-toggle"; tap_xy toggle $xy || return 2; sleep 1.5
+  ui_dump && xy=$(target save_button_widget 'Save (Reconnect needed)') || { echo -e "$1\tSAVE_NOT_ARMED" | tee -a "$OUT/$RUN.tsv"; return 2; }
+  mark "$1-tap-save"; tap_xy save $xy || return 2
+  fastwait 20 "$SAVE_C" "$L" || { echo -e "$1\tNO_SAVE_LINE" | tee -a "$OUT/$RUN.tsv"; return 2; }
+  SAVE_LN=$(lno "$L" "$SAVE_C"); T0=$(ms "$(tat $SAVE_LN)"); H0=$(date +%s%3N); mark "$1-saved"; }
 ```
 
 Every action in this round:
@@ -216,7 +246,7 @@ Every action in this round:
 | Media play | `adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY` | relayed to the phone's player |
 | Launch our app | `adb -s $HU shell am start -n $MAIN` | D-POCO refuses `ACTION_START_WIRELESS_SCAN` after a force-stop |
 | Phone Bluetooth | `adb -s $PH shell svc bluetooth disable` / `enable` | ND |
-| The Save | H-SAVE | 3.2 |
+| The Save | `tap_save <label>` | two injected taps on dumped targets (3.2) |
 
 Every `send` must print `AutomationReceiver: <action>` in the capture. A step with no such line never landed; its cycle is void, not a FAIL.
 
@@ -232,7 +262,7 @@ PASS needs: C's and E's md5s recorded and different; C's tree as stated; the 1a 
 
 ### A0 The audio streams screen opens (D-HU, before the first Save)
 
-As round 2's A0, on C only: `dest_id` prints a non-zero id, `open_audio` returns 0 with route `am`, and the screenshot shows the "Separate audio streams" toggle and the Save button. A FAIL makes every Stage A run UNTESTABLE. Repeat at U0 on D-POCO with E (route `am` expected). Time: 2 min.
+As round 2's A0, on C only: `dest_id` prints a non-zero id, `open_audio` returns 0 with route `am`, and the screenshot shows the "Separate Audio Streams" toggle and the Save button. Then `ui_dump && target settingSwitch && target save_button_widget` must print two coordinate pairs (the Save button exists but is not armed yet, so do not pass a text here). No tap in A0. A FAIL makes every Stage A run UNTESTABLE. Repeat at U0 on D-POCO with E (route `am` expected). Time: 2 min.
 
 ### Stage A preparation (once)
 
@@ -246,7 +276,7 @@ adb -s $HU shell am force-stop $PKG; adb -s $HU shell cat /data/data/$PKG/shared
 
 Re-enable D-MOTO's radios at the end of Stage A and read both back.
 
-### N2 A Native AA Save where the phone is woken at once (the point; C, 3 graded cycles, max 5 attempts)
+### N2 A Native AA Save where the phone is woken at once (the point; C, 2 cycles, 4 taps; N2R repeats it once if needed)
 
 The claim: after the Save, the retry wakes the phone within a few seconds, and the session comes back well inside the 30 s window. Round 2 measured 32.5 to 34.1 s on the old head.
 
@@ -256,9 +286,9 @@ echo "N2 preflight native=$(cnt $L '$' 'WifiLauncher: Initializing WiFi Mode: NA
 adb -s $HU shell input keyevent KEYCODE_MEDIA_PLAY; sleep 10
 AUDIO_OK=$(cnt $L '$' 'AudioDecoder.start: channel='); echo "N2 audio precondition=$AUDIO_OK" | tee -a $OUT/N2-C.tsv   # 0: the audio leg is INCONCLUSIVE
 graded=0
-for k in 1 2 3 4 5; do
+for k in 1 2; do
   S=$(nl); p0=$(pcnt 'Critical error'); b0=$(pcnt "$BYE"); f0=$(pcnt 'FATAL EXCEPTION'); mark N2-$k-go
-  hand_save N2-$k || continue
+  tap_save N2-$k || continue
   close_settings
   waitfor 60 'SSL handshake complete' $SAVE_LN; LS=$(lno $SAVE_LN 'SSL handshake complete')
   waitfor 30 "$REND" ${LS:-$SAVE_LN}; LV=$(tail -n +$(( LS>0 ? LS : SAVE_LN )) "$CAP" | grep -anE -m1 "$REND" | cut -d: -f1)
@@ -274,13 +304,13 @@ for k in 1 2 3 4 5; do
   echo -e "$R" | tee -a $OUT/N2-C.tsv
   # graded unless the first poke failed and the session was late (D-POCO's unanswered poke)
   if [ "$T2" != NA ] && [ "$T2" -le 15000 ]; then graded=$((graded+1)); elif [ "$(pokefail 0 20000)" -gt 0 ]; then echo -e "N2-$k\tpoke unanswered" | tee -a $OUT/N2-C.tsv; else graded=$((graded+1)); fi
-  [ $graded -ge 3 ] && break; sleep 10
+  [ $graded -ge 2 ] && break; sleep 10
   [ "$T2" = NA ] && { L=$(nl); send ACTION_START_WIRELESS_SCAN >/dev/null; up_session 120 $L || break; }
 done
 r_close N2-C
 ```
 
-**A cycle is not graded** (`poke unanswered`) when `t_ssl2` is above 15000 or NA and `pokefail_before_ssl2` (failed poke sockets in the first 20 s) is 1 or more. Report it with its numbers. **Stop rule:** stop at the 3rd graded cycle or after 5 attempts. Fewer than 2 graded cycles makes N2 INCONCLUSIVE.
+**A cycle is not graded** (`poke unanswered`) when `t_ssl2` is above 15000 or NA and `pokefail_before_ssl2` (failed poke sockets in the first 20 s) is 1 or more. Report it with its numbers. **Stop rule:** N2 makes 2 attempts. **N2R:** if N2 graded fewer than 2 cycles, run the same block once more as a new run, `r_open N2R-C $AKEYS` with `N2R-$k` labels and `$OUT/N2R-C.tsv`, 2 more attempts and its own 4-tap budget. Grade N2 and N2R together. Fewer than 2 graded cycles across both makes N2 INCONCLUSIVE.
 
 **PASS, on every graded cycle:**
 
@@ -305,7 +335,7 @@ graded=0
 for k in 1 2; do
   S=$(nl); mark ND-$k-go; b0=$(pcnt "$BYE")
   fire_on $S 'CommManager: audio settings changed; reconnecting the projection session' adb -s $PH shell svc bluetooth disable
-  hand_save ND-$k || { kill $FIREPID 2>/dev/null; continue; }
+  tap_save ND-$k || { kill $FIREPID 2>/dev/null; continue; }
   close_settings
   hold_until 8000; D=$(nl); send ACTION_DISCONNECT >/dev/null; TD=$(ms_of $(lno $D 'Disconnect action received.'))
   hold_until 12000; adb -s $PH shell svc bluetooth enable
@@ -337,7 +367,7 @@ adb -s $HU install -r <E apk>; ARM=E; WANT_MD5=<E md5>       # then the 1a gate 
 
 PASS: wireless adb answers; D-POCO's port table shows no 5277 listener; A0 on D-POCO passes with route `am`; with `U1KEYS`, a launch and `L=$(nl); cue "H1: plug the dongle into D-POCO's OTG port"; usb_live $L` forms a USB session, with `stopping the wireless stack for the duration of it` 1 or more after it. Tick "Always" on the first permission dialog (H2). A failed U0 makes U1 UNTESTABLE with the reason. Time: 10 min.
 
-### U1 A USB Save with the settings screen kept open for 35 s (E, 2 cycles, max 3 attempts)
+### U1 A USB Save with the settings screen kept open for 35 s (E, 2 cycles, 4 taps)
 
 The claim (`70fffaca`): the Save keeps owning the dongle's return. Its retries survive a failed open, the re-attach in accessory mode carries the Save instead of being held by the screen, and a USB session forms behind the open screen. Wireless does not arm in the window. Round 2 could not grade this.
 
@@ -345,9 +375,9 @@ The claim (`70fffaca`): the Save keeps owning the dongle's return. Its retries s
 r_open U1-C $U1KEYS; L=$(nl); adb -s $HU shell am start -n $MAIN >/dev/null; usb_live $L || echo "U1 no USB session at start"
 echo "U1 preflight native=$(cnt $L '$' 'WifiLauncher: Initializing WiFi Mode: NATIVE') quiesce=$(cnt $L '$' 'stopping the wireless stack for the duration of it')" | tee -a $OUT/U1-C.tsv   # both 1 or more
 done=0
-for k in 1 2 3; do
+for k in 1 2; do
   S=$(nl); p0=$(pcnt 'Critical error'); f0=$(pcnt 'FATAL EXCEPTION'); mark U1-$k-go
-  hand_save U1-$k || continue
+  tap_save U1-$k || continue
   hold_until 35000; C0=$(nl); close_settings; waitfor 60 'SSL handshake complete' $C0; E=$(nl)
   FS=$(lno $SAVE_LN 'SSL handshake complete')
   R="U1-$k\tretry=$(cntw 0 5000 'SettingsRestart: route=USB retry=run')\tdetach=$(cntw 0 35000 'USB_DEVICE_DETACHED')\treattach=$(cntw 0 35000 'USB accessory device attached, connecting.')"
@@ -396,7 +426,7 @@ Restore each unit's round backup of `settings.xml` (D-HU as root; D-POCO with `p
 **Evidence:** release `rig-evidence-pr-1047-session-reconnect`, asset `pr-1047-session-reconnect-round3-captures.zip`, sha256 <hash>
 
 ## Setup notes
-Deviations; scripts used and added; every hand step with its time (from `hand-steps.log`); the `open_audio` route and destination id per unit; the rig audio keys and `separate-audio-streams` as found and as restored; void and unanswered cycles and why; any string that did not match; thermal per run.
+Deviations; scripts used and added; every injected tap from `taps.log` (run, target, coordinates) and the tap count per run; every hand step with its time (from `hand-steps.log`); the `open_audio` route and destination id per unit; the rig audio keys and `separate-audio-streams` as found and as restored; void and unanswered cycles and why; any string that did not match; thermal per run.
 
 ## R0 Gate
 | APK | md5 | `SettingsRestart: route=` count | commit or tree | JVM count |
@@ -407,8 +437,8 @@ Deviations; scripts used and added; every hand step with its time (from `hand-st
 |---|---|---|---|
 
 ## N2 (the point)
-| cycle | t_retry | t_poke | t_ssl2 | pokefail_before_ssl2 | poked_before_ssl2 | hold | ssl_count | t_video2 | audio | fallback_run | fallback_skip | settings_restart | link_lost | raise | bye_phone | crit | graded |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| run | cycle | t_retry | t_poke | t_ssl2 | pokefail_before_ssl2 | poked_before_ssl2 | hold | ssl_count | t_video2 | audio | fallback_run | fallback_skip | settings_restart | link_lost | raise | bye_phone | crit | graded |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 The Native Save reconnects inside 15 s: yes / no.
 
 ## ND
