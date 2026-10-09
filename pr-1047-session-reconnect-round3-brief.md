@@ -1,5 +1,7 @@
 # session-reconnect, round 3 brief: the Native AA Save wakes the phone at once, and the USB Save keeps its retry
 
+> **ADDENDUM, read first:** `pr-1047-session-reconnect-round3-addendum.md` moves this round onto the merged stack build (tree `2c4b06fd`). It replaces sections 1 and 1a below. Everything else stands.
+
 This round tests four new commits on the outside contributor's session-reconnect change. Round 2 found that a Native AA Save took 32.5 to 34.1 s to reconnect, because the Save held the wake for the whole 30 s window. Round 2 also could not grade the USB Save. The new commits answer both. This round measures the two, plus the Disconnect action inside the window. It needs no other round first.
 
 **This round is cut to the runs that decide the two open items, and it should be the last one on this PR.** The owner will merge nothing else into `main` until the contributor's stacked PRs merge, so `main` stays at `77914f18` and the build below does not need a re-pin. Do not add runs or cycles beyond what is written here.
