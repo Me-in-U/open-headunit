@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-10-09). Do not run.** The PR head this brief pins was rebased. `pr-stack-1047-1067-round1-brief.md` replaces it.
+
 # pr-1045-framing, round 3 brief: the parse proof and the load soak, candidate only, about 1 hour
 
 One stage only: D-HU as head unit with D-POCO over Native AA. Two runs, both on the candidate: A1-C (about 8 minutes) and A2-C (about 15 minutes). **No baseline arm and no USB stage.** Round 2 (`pr-1045-framing-round2-results.md`) failed nothing. This round closes the two gaps it left: the phone title that the helper could not read, and the load that A2 never reached.

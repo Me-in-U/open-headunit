@@ -1,3 +1,5 @@
+> **SUPERSEDED (2026-10-09). Do not run.** The PR head this brief pins was rebased. `pr-stack-1047-1067-round1-brief.md` replaces it.
+
 # pr-1067-tls-pump, round 3 brief: one soak on the candidate, behind a load gate, about 40 minutes
 
 One stage only: D-HU as head unit with D-POCO over Native AA. One run: KW-C, a 15-minute soak on the candidate. **No baseline arm, no phone exits and no operator.** Round 2 (`pr-1067-tls-pump-round2-results.md`) failed nothing. This round closes the one gap that a rerun can close: the soak whose phone sent a tenth of the reference load.
